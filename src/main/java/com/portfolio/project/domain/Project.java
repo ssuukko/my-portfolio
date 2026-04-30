@@ -17,6 +17,7 @@ public class Project {
     private String description;
     private String thumbnailUrl;
     private String featureImageUrls;
+    private String featureImageCaptions;
     private String projectUrl;
     private LocalDate startDate;
     private LocalDate endDate;
@@ -36,6 +37,7 @@ public class Project {
             String description,
             String thumbnailUrl,
             String featureImageUrls,
+            String featureImageCaptions,
             String projectUrl,
             LocalDate startDate,
             LocalDate endDate,
@@ -55,6 +57,7 @@ public class Project {
         this.description = description;
         this.thumbnailUrl = thumbnailUrl;
         this.featureImageUrls = featureImageUrls;
+        this.featureImageCaptions = featureImageCaptions;
         this.projectUrl = projectUrl;
         this.startDate = startDate;
         this.endDate = endDate;
@@ -75,6 +78,7 @@ public class Project {
             String description,
             String thumbnailUrl,
             String featureImageUrls,
+            String featureImageCaptions,
             String projectUrl,
             LocalDate startDate,
             LocalDate endDate,
@@ -92,6 +96,7 @@ public class Project {
                 description,
                 thumbnailUrl,
                 featureImageUrls,
+                featureImageCaptions,
                 projectUrl,
                 startDate,
                 endDate,
@@ -111,6 +116,7 @@ public class Project {
             String description,
             String thumbnailUrl,
             String featureImageUrls,
+            String featureImageCaptions,
             String projectUrl,
             LocalDate startDate,
             LocalDate endDate,
@@ -130,6 +136,7 @@ public class Project {
         this.description = description;
         this.thumbnailUrl = thumbnailUrl;
         this.featureImageUrls = featureImageUrls;
+        this.featureImageCaptions = featureImageCaptions;
         this.projectUrl = projectUrl;
         this.startDate = startDate;
         this.endDate = endDate;
