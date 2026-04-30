@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.portfolio.project.mapper.ProjectMapper">
+
+    <insert id="save" parameterType="com.portfolio.project.domain.Project" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO projects (
+            title,
+            summary,
+            description,
+            thumbnail_url,
+            start_date,
+            end_date,
+            created_at,
+            updated_at
+        )
+        VALUES (
+            #{title},
+            #{summary},
+            #{description},
+            #{thumbnailUrl},
+            #{startDate},
+            #{endDate},
+            #{createdAt},
+            #{updatedAt}
+        )
+    </insert>
+
+    <select id="findById" parameterType="long" resultType="com.portfolio.project.domain.Project">
+        SELECT
+            id,
+            title,
+            summary,
+            description,
+            thumbnail_url,
+            start_date,
+            end_date,
+            created_at,
+            updated_at
+        FROM projects
+        WHERE id = #{id}
+    </select>
+
+    <select id="findAll" resultType="com.portfolio.project.domain.Project">
+        SELECT
+            id,
+            title,
+            summary,
+            description,
+            thumbnail_url,
+            start_date,
+            end_date,
+            created_at,
+            updated_at
+        FROM projects
+        ORDER BY id DESC
+    </select>
+
+    <update id="update" parameterType="com.portfolio.project.domain.Project">
+        UPDATE projects
+        SET
+            title = #{title},
+            summary = #{summary},
+            description = #{description},
+            thumbnail_url = #{thumbnailUrl},
+            start_date = #{startDate},
+            end_date = #{endDate},
+            updated_at = #{updatedAt}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById" parameterType="long">
+        DELETE FROM projects
+        WHERE id = #{id}
+    </delete>
+
+</mapper>
