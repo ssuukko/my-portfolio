@@ -10,6 +10,7 @@ public record ProjectUpdateRequest(
         String summary,
         String description,
         String thumbnailUrl,
+        String featureImageUrls,
         String projectUrl,
         LocalDate startDate,
         LocalDate endDate,

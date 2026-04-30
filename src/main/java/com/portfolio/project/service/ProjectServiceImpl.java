@@ -51,6 +51,7 @@ public class ProjectServiceImpl implements ProjectService {
                 request.summary(),
                 request.description(),
                 request.thumbnailUrl(),
+                request.featureImageUrls(),
                 request.projectUrl(),
                 request.startDate(),
                 request.endDate(),

@@ -16,6 +16,7 @@ public class Project {
     private String summary;
     private String description;
     private String thumbnailUrl;
+    private String featureImageUrls;
     private String projectUrl;
     private LocalDate startDate;
     private LocalDate endDate;
@@ -34,6 +35,7 @@ public class Project {
             String summary,
             String description,
             String thumbnailUrl,
+            String featureImageUrls,
             String projectUrl,
             LocalDate startDate,
             LocalDate endDate,
@@ -52,6 +54,7 @@ public class Project {
         this.summary = summary;
         this.description = description;
         this.thumbnailUrl = thumbnailUrl;
+        this.featureImageUrls = featureImageUrls;
         this.projectUrl = projectUrl;
         this.startDate = startDate;
         this.endDate = endDate;
@@ -71,6 +74,7 @@ public class Project {
             String summary,
             String description,
             String thumbnailUrl,
+            String featureImageUrls,
             String projectUrl,
             LocalDate startDate,
             LocalDate endDate,
@@ -87,6 +91,7 @@ public class Project {
                 summary,
                 description,
                 thumbnailUrl,
+                featureImageUrls,
                 projectUrl,
                 startDate,
                 endDate,
@@ -105,6 +110,7 @@ public class Project {
             String summary,
             String description,
             String thumbnailUrl,
+            String featureImageUrls,
             String projectUrl,
             LocalDate startDate,
             LocalDate endDate,
@@ -123,6 +129,7 @@ public class Project {
         this.summary = summary;
         this.description = description;
         this.thumbnailUrl = thumbnailUrl;
+        this.featureImageUrls = featureImageUrls;
         this.projectUrl = projectUrl;
         this.startDate = startDate;
         this.endDate = endDate;
