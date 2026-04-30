@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS projects (
     description       TEXT,
     thumbnail_url     TEXT,
     feature_image_urls TEXT,
+    feature_image_captions TEXT,
     project_url       VARCHAR(500),
     start_date        DATE,
     end_date          DATE,
@@ -22,6 +23,7 @@ CREATE TABLE IF NOT EXISTS projects (
 ALTER TABLE projects
     ADD COLUMN IF NOT EXISTS project_url VARCHAR(500),
     ADD COLUMN IF NOT EXISTS feature_image_urls TEXT,
+    ADD COLUMN IF NOT EXISTS feature_image_captions TEXT,
     ADD COLUMN IF NOT EXISTS use_yn CHAR(1) NOT NULL DEFAULT 'Y',
     ADD COLUMN IF NOT EXISTS tech_stack TEXT,
     ADD COLUMN IF NOT EXISTS my_role TEXT,
