@@ -10,7 +10,15 @@ public record ProjectUpdateRequest(
         String summary,
         String description,
         String thumbnailUrl,
+        String projectUrl,
         LocalDate startDate,
-        LocalDate endDate
+        LocalDate endDate,
+        String useYn,
+        String techStack,
+        String myRole,
+        String troubleShooting,
+        String githubUrl,
+        String deployUrl,
+        String result
 ) {
 }

@@ -51,8 +51,16 @@ public class ProjectServiceImpl implements ProjectService {
                 request.summary(),
                 request.description(),
                 request.thumbnailUrl(),
+                request.projectUrl(),
                 request.startDate(),
-                request.endDate()
+                request.endDate(),
+                request.useYn(),
+                request.techStack(),
+                request.myRole(),
+                request.troubleShooting(),
+                request.githubUrl(),
+                request.deployUrl(),
+                request.result()
         );
         projectMapper.update(project);
     }
