@@ -150,8 +150,11 @@ function ProjectDetailPage() {
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search)
     const refParam = searchParams.get('ref')?.trim() ?? ''
+    const isAdminSession =
+      refParam === 'admin' ||
+      window.sessionStorage.getItem('portfolioAdminSession') === 'true'
 
-    if (refParam !== 'admin') {
+    if (!isAdminSession) {
       const referrer = refParam || document.referrer || 'direct'
 
       logVisit({

@@ -73,6 +73,10 @@ const getProjectPayload = (project, useYn = project.useYn ?? 'Y') => ({
   useYn,
 })
 
+const markAdminSession = () => {
+  window.sessionStorage.setItem('portfolioAdminSession', 'true')
+}
+
 function AdminPage() {
   const navigate = useNavigate()
   const [projects, setProjects] = useState([])
@@ -120,6 +124,8 @@ function AdminPage() {
   }
 
   useEffect(() => {
+    markAdminSession()
+
     const loadInitialData = async () => {
       try {
         const [projectList, visitList] = await Promise.all([
@@ -230,7 +236,10 @@ function AdminPage() {
           <button
             className="secondary-button"
             type="button"
-            onClick={() => navigate('/')}
+            onClick={() => {
+              markAdminSession()
+              navigate('/?ref=admin')
+            }}
           >
             ← 포트폴리오
           </button>
