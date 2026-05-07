@@ -23,6 +23,7 @@ public record ProjectResponse(
         String githubUrl,
         String deployUrl,
         String result,
+        Integer displayOrder,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
@@ -46,6 +47,7 @@ public record ProjectResponse(
                 project.getGithubUrl(),
                 project.getDeployUrl(),
                 project.getResult(),
+                project.getDisplayOrder(),
                 project.getCreatedAt(),
                 project.getUpdatedAt()
         );

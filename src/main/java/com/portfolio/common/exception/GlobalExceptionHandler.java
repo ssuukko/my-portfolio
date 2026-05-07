@@ -1,8 +1,10 @@
 package com.portfolio.common.exception;
 
 import com.portfolio.common.ApiResponse;
+import org.apache.catalina.connector.ClientAbortException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -45,6 +47,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .body(ApiResponse.fail("요청한 리소스를 찾을 수 없습니다."));
+    }
+
+    @ExceptionHandler({
+            AsyncRequestNotUsableException.class,
+            ClientAbortException.class
+    })
+    public void handleClientAbortException(Exception exception) {
+        log.debug("Client disconnected before the response was completed: {}", exception.getMessage());
     }
 
     @ExceptionHandler(Exception.class)

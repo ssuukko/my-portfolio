@@ -1,6 +1,7 @@
 package com.portfolio.project.mapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import com.portfolio.project.domain.Project;
 
@@ -16,7 +17,14 @@ public interface ProjectMapper {
 
     List<Project> findAll();
 
+    Integer findNextDisplayOrder();
+
     void update(Project project);
+
+    void updateDisplayOrder(
+            @Param("id") Long id,
+            @Param("displayOrder") Integer displayOrder
+    );
 
     void deleteById(Long id);
 }

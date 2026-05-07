@@ -23,6 +23,7 @@
             github_url,
             deploy_url,
             result,
+            display_order,
             created_at,
             updated_at
         )
@@ -43,6 +44,7 @@
             #{githubUrl},
             #{deployUrl},
             #{result},
+            #{displayOrder},
             #{createdAt},
             #{updatedAt}
         )
@@ -67,6 +69,7 @@
             github_url,
             deploy_url,
             result,
+            display_order,
             created_at,
             updated_at
         FROM projects
@@ -92,10 +95,16 @@
             github_url,
             deploy_url,
             result,
+            display_order,
             created_at,
             updated_at
         FROM projects
-        ORDER BY id DESC
+        ORDER BY display_order ASC, id DESC
+    </select>
+
+    <select id="findNextDisplayOrder" resultType="int">
+        SELECT COALESCE(MAX(display_order), 0) + 1
+        FROM projects
     </select>
 
     <update id="update" parameterType="com.portfolio.project.domain.Project">
@@ -117,7 +126,16 @@
             github_url = #{githubUrl},
             deploy_url = #{deployUrl},
             result = #{result},
+            display_order = #{displayOrder},
             updated_at = #{updatedAt}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateDisplayOrder">
+        UPDATE projects
+        SET
+            display_order = #{displayOrder},
+            updated_at = CURRENT_TIMESTAMP
         WHERE id = #{id}
     </update>
 
