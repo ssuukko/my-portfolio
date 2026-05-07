@@ -18,6 +18,16 @@ const isProjectEnabled = (project) => project.useYn !== 'N'
 
 const getProjectInitial = (title) => title?.trim()?.slice(0, 1) || 'P'
 
+const isAdminVisit = () => {
+  const searchParams = new URLSearchParams(window.location.search)
+  const refParam = searchParams.get('ref')?.trim() ?? ''
+
+  return (
+    refParam === 'admin' ||
+    window.sessionStorage.getItem('portfolioAdminSession') === 'true'
+  )
+}
+
 /* ── SVG Icons ── */
 const ArrowRightIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -31,12 +41,14 @@ function PortfolioPage() {
   const [projects, setProjects] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
+  const isAdminSession = isAdminVisit()
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search)
     const refParam = searchParams.get('ref')?.trim() ?? ''
+    const shouldSkipVisitLog = isAdminVisit()
 
-    if (refParam !== 'admin') {
+    if (!shouldSkipVisitLog) {
       const referrer = refParam || document.referrer || 'direct'
 
       logVisit({
@@ -114,7 +126,13 @@ function PortfolioPage() {
                 className="pf-card pd-reveal"
                 style={{ animationDelay: `${index * 0.1}s` }}
                 key={project.id ?? project.title}
-                onClick={() => navigate(`/projects/${project.id}`)}
+                onClick={() =>
+                  navigate(
+                    `/projects/${project.id}${
+                      isAdminSession ? '?ref=admin' : ''
+                    }`,
+                  )
+                }
               >
                 <div className="pf-card__media">
                   {project.thumbnailUrl ? (
