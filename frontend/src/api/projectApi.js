@@ -40,6 +40,23 @@ export const fetchProject = async (id) => {
   return data.data
 }
 
+export const logVisit = async (body) => {
+  const data = await request('/api/visits', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  })
+
+  return data.data
+}
+
+export const fetchVisits = async () => {
+  const data = await request('/api/visits')
+  return data.data ?? []
+}
+
 export const createProject = async (body) => {
   const data = await request('/api/projects', {
     method: 'POST',

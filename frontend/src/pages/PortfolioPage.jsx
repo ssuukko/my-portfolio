@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { fetchProjects } from '../api/projectApi'
+import { fetchProjects, logVisit } from '../api/projectApi'
 
 const formatDate = (date) => {
   if (!date) {
@@ -33,6 +33,21 @@ function PortfolioPage() {
   const [errorMessage, setErrorMessage] = useState('')
 
   useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search)
+    const refParam = searchParams.get('ref')?.trim() ?? ''
+
+    if (refParam !== 'admin') {
+      const referrer = refParam || document.referrer || 'direct'
+
+      logVisit({
+        pageUrl: window.location.href,
+        referrer,
+        refParam: refParam || null,
+      }).catch((error) => {
+        console.error('Failed to log visit:', error)
+      })
+    }
+
     const fetchDashboardData = async () => {
       try {
         const projectList = await fetchProjects()
