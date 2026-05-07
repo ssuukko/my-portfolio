@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.portfolio.common.ApiResponse;
 import com.portfolio.project.dto.ProjectCreateRequest;
+import com.portfolio.project.dto.ProjectOrderUpdateRequest;
 import com.portfolio.project.dto.ProjectResponse;
 import com.portfolio.project.dto.ProjectUpdateRequest;
 import com.portfolio.project.service.ProjectService;
@@ -65,6 +66,14 @@ public class ProjectController {
     ) {
         projectService.updateProject(id, request);
         return ResponseEntity.ok(ApiResponse.success(null, "프로젝트가 수정되었습니다."));
+    }
+
+    @PutMapping("/projects/order")
+    public ResponseEntity<ApiResponse<Void>> updateProjectOrder(
+            @Valid @RequestBody ProjectOrderUpdateRequest request
+    ) {
+        projectService.updateProjectOrder(request);
+        return ResponseEntity.ok(ApiResponse.success(null, "프로젝트 순서가 변경되었습니다."));
     }
 
     @DeleteMapping("/projects/{id}")

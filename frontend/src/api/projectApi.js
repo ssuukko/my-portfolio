@@ -81,6 +81,18 @@ export const updateProject = async (id, body) => {
   return data.data
 }
 
+export const updateProjectOrder = async (projectIds) => {
+  const data = await request('/api/projects/order', {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ projectIds }),
+  })
+
+  return data.data
+}
+
 export const deleteProject = async (id) => {
   const data = await request(`/api/projects/${id}`, {
     method: 'DELETE',

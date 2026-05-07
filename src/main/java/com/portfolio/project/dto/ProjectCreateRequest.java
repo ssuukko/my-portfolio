@@ -22,7 +22,8 @@ public record ProjectCreateRequest(
         String troubleShooting,
         String githubUrl,
         String deployUrl,
-        String result
+        String result,
+        Integer displayOrder
 ) {
 
     public Project toProject() {
@@ -42,7 +43,8 @@ public record ProjectCreateRequest(
                 troubleShooting,
                 githubUrl,
                 deployUrl,
-                result
+                result,
+                displayOrder
         );
     }
 }

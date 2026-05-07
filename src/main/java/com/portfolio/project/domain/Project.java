@@ -28,6 +28,7 @@ public class Project {
     private String githubUrl;
     private String deployUrl;
     private String result;
+    private Integer displayOrder;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -47,7 +48,8 @@ public class Project {
             String troubleShooting,
             String githubUrl,
             String deployUrl,
-            String result
+            String result,
+            Integer displayOrder
     ) {
         validateTitle(title);
         validatePeriod(startDate, endDate);
@@ -68,6 +70,7 @@ public class Project {
         this.githubUrl = githubUrl;
         this.deployUrl = deployUrl;
         this.result = result;
+        this.displayOrder = normalizeDisplayOrder(displayOrder);
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
@@ -88,7 +91,8 @@ public class Project {
             String troubleShooting,
             String githubUrl,
             String deployUrl,
-            String result
+            String result,
+            Integer displayOrder
     ) {
         return new Project(
                 title,
@@ -106,7 +110,8 @@ public class Project {
                 troubleShooting,
                 githubUrl,
                 deployUrl,
-                result
+                result,
+                displayOrder
         );
     }
 
@@ -126,7 +131,8 @@ public class Project {
             String troubleShooting,
             String githubUrl,
             String deployUrl,
-            String result
+            String result,
+            Integer displayOrder
     ) {
         validateTitle(title);
         validatePeriod(startDate, endDate);
@@ -147,6 +153,12 @@ public class Project {
         this.githubUrl = githubUrl;
         this.deployUrl = deployUrl;
         this.result = result;
+        this.displayOrder = normalizeDisplayOrder(displayOrder);
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void updateDisplayOrder(Integer displayOrder) {
+        this.displayOrder = normalizeDisplayOrder(displayOrder);
         this.updatedAt = LocalDateTime.now();
     }
 
@@ -176,5 +188,13 @@ public class Project {
         }
 
         return useYn.trim().toUpperCase();
+    }
+
+    private Integer normalizeDisplayOrder(Integer displayOrder) {
+        if (displayOrder == null || displayOrder < 0) {
+            return 0;
+        }
+
+        return displayOrder;
     }
 }

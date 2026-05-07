@@ -6,6 +6,7 @@ import {
   deleteProject,
   fetchProjects,
   fetchVisits,
+  updateProjectOrder,
   updateProject,
 } from '../api/projectApi'
 
@@ -66,6 +67,7 @@ const getProjectPayload = (project, useYn = project.useYn ?? 'Y') => ({
   githubUrl: project.githubUrl,
   deployUrl: project.deployUrl,
   result: project.result,
+  displayOrder: project.displayOrder,
   startDate: project.startDate ? String(project.startDate).split('T')[0] : null,
   endDate: project.endDate ? String(project.endDate).split('T')[0] : null,
   useYn,
@@ -175,6 +177,29 @@ function AdminPage() {
     }
   }
 
+  const handleMoveProject = async (projectIndex, direction) => {
+    const targetIndex = projectIndex + direction
+
+    if (targetIndex < 0 || targetIndex >= projects.length) {
+      return
+    }
+
+    const nextProjects = [...projects]
+    const [movedProject] = nextProjects.splice(projectIndex, 1)
+    nextProjects.splice(targetIndex, 0, movedProject)
+
+    setProjects(nextProjects)
+
+    try {
+      await updateProjectOrder(nextProjects.map((project) => project.id))
+      await loadProjects(false)
+    } catch (error) {
+      console.error('Failed to update project order:', error)
+      setProjects(projects)
+      alert(error.message || '프로젝트 순서 변경에 실패했습니다.')
+    }
+  }
+
   const handleModalClose = () => {
     setIsModalOpen(false)
     setSelectedProject(null)
@@ -269,6 +294,7 @@ function AdminPage() {
                   <th>시작일</th>
                   <th>종료일</th>
                   <th>사용여부</th>
+                  <th>순서</th>
                   <th>수정</th>
                   <th>삭제</th>
                 </tr>
@@ -276,7 +302,7 @@ function AdminPage() {
               <tbody>
                 {projects.length === 0 && (
                   <tr>
-                    <td className="table-empty" colSpan="8">
+                    <td className="table-empty" colSpan="9">
                       등록된 프로젝트가 없습니다.
                     </td>
                   </tr>
@@ -298,6 +324,28 @@ function AdminPage() {
                       >
                         {project.useYn === 'N' ? 'N 미사용' : 'Y 사용'}
                       </button>
+                    </td>
+                    <td>
+                      <div className="order-controls">
+                        <button
+                          className="order-button"
+                          type="button"
+                          onClick={() => handleMoveProject(index, -1)}
+                          disabled={index === 0}
+                          aria-label={`${project.title} 위로 이동`}
+                        >
+                          ↑
+                        </button>
+                        <button
+                          className="order-button"
+                          type="button"
+                          onClick={() => handleMoveProject(index, 1)}
+                          disabled={index === projects.length - 1}
+                          aria-label={`${project.title} 아래로 이동`}
+                        >
+                          ↓
+                        </button>
+                      </div>
                     </td>
                     <td>
                       <button

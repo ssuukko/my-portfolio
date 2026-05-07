@@ -21,6 +21,7 @@ public record ProjectUpdateRequest(
         String troubleShooting,
         String githubUrl,
         String deployUrl,
-        String result
+        String result,
+        Integer displayOrder
 ) {
 }
