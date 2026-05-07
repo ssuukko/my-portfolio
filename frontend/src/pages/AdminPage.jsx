@@ -5,6 +5,7 @@ import {
   createProject,
   deleteProject,
   fetchProjects,
+  fetchVisits,
   updateProject,
 } from '../api/projectApi'
 
@@ -26,6 +27,29 @@ const truncateSummary = (summary) => {
   }
 
   return `${summary.slice(0, 40)}...`
+}
+
+const formatDateTime = (date) => {
+  if (!date) {
+    return '-'
+  }
+
+  return new Intl.DateTimeFormat('ko-KR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  }).format(new Date(date))
+}
+
+const formatReferrer = (referrer) => {
+  if (!referrer || referrer === 'direct') {
+    return '직접 방문'
+  }
+
+  return referrer
 }
 
 const getProjectPayload = (project, useYn = project.useYn ?? 'Y') => ({
@@ -50,8 +74,12 @@ const getProjectPayload = (project, useYn = project.useYn ?? 'Y') => ({
 function AdminPage() {
   const navigate = useNavigate()
   const [projects, setProjects] = useState([])
+  const [visits, setVisits] = useState([])
+  const [activeTab, setActiveTab] = useState('projects')
   const [isLoading, setIsLoading] = useState(true)
+  const [isVisitsLoading, setIsVisitsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
+  const [visitErrorMessage, setVisitErrorMessage] = useState('')
   const [selectedProject, setSelectedProject] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
@@ -72,20 +100,43 @@ function AdminPage() {
     }
   }
 
+  const loadVisits = async (showLoading = true) => {
+    try {
+      if (showLoading) {
+        setIsVisitsLoading(true)
+      }
+      setVisitErrorMessage('')
+
+      const visitList = await fetchVisits()
+      setVisits(visitList)
+    } catch (error) {
+      console.error('Failed to load visits:', error)
+      setVisitErrorMessage(error.message || '방문 로그를 불러오지 못했습니다.')
+    } finally {
+      setIsVisitsLoading(false)
+    }
+  }
+
   useEffect(() => {
-    const loadInitialProjects = async () => {
+    const loadInitialData = async () => {
       try {
-        const projectList = await fetchProjects()
+        const [projectList, visitList] = await Promise.all([
+          fetchProjects(),
+          fetchVisits(),
+        ])
         setProjects(projectList)
+        setVisits(visitList)
       } catch (error) {
-        console.error('Failed to load projects:', error)
-        setErrorMessage(error.message || '프로젝트 목록을 불러오지 못했습니다.')
+        console.error('Failed to load admin data:', error)
+        setErrorMessage(error.message || '관리자 데이터를 불러오지 못했습니다.')
+        setVisitErrorMessage(error.message || '관리자 데이터를 불러오지 못했습니다.')
       } finally {
         setIsLoading(false)
+        setIsVisitsLoading(false)
       }
     }
 
-    loadInitialProjects()
+    loadInitialData()
   }, [])
 
   const handleCreateClick = () => {
@@ -168,18 +219,46 @@ function AdminPage() {
         <section className="section-heading" aria-labelledby="admin-heading">
           <div>
             <p className="eyebrow">Records</p>
-            <h2 id="admin-heading">프로젝트 목록</h2>
+            <h2 id="admin-heading">
+              {activeTab === 'projects' ? '프로젝트 목록' : '방문 로그'}
+            </h2>
           </div>
-          <span className="project-count">{projects.length}개</span>
+          <span className="project-count">
+            {activeTab === 'projects' ? projects.length : visits.length}개
+          </span>
         </section>
 
-        {isLoading && (
+        <div className="admin-tabs" role="tablist" aria-label="관리자 메뉴">
+          <button
+            className={activeTab === 'projects' ? 'admin-tab active' : 'admin-tab'}
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'projects'}
+            onClick={() => setActiveTab('projects')}
+          >
+            프로젝트
+          </button>
+          <button
+            className={activeTab === 'visits' ? 'admin-tab active' : 'admin-tab'}
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'visits'}
+            onClick={() => {
+              setActiveTab('visits')
+              loadVisits(false)
+            }}
+          >
+            방문 로그
+          </button>
+        </div>
+
+        {activeTab === 'projects' && isLoading && (
           <div className="empty-state">데이터를 불러오는 중입니다...</div>
         )}
-        {!isLoading && errorMessage && (
+        {activeTab === 'projects' && !isLoading && errorMessage && (
           <div className="empty-state error-message">{errorMessage}</div>
         )}
-        {!isLoading && !errorMessage && (
+        {activeTab === 'projects' && !isLoading && !errorMessage && (
           <div className="table-shell">
             <table className="project-table">
               <thead>
@@ -238,6 +317,54 @@ function AdminPage() {
                         삭제
                       </button>
                     </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {activeTab === 'visits' && isVisitsLoading && (
+          <div className="empty-state">방문 로그를 불러오는 중입니다...</div>
+        )}
+        {activeTab === 'visits' && !isVisitsLoading && visitErrorMessage && (
+          <div className="empty-state error-message">{visitErrorMessage}</div>
+        )}
+        {activeTab === 'visits' && !isVisitsLoading && !visitErrorMessage && (
+          <div className="table-shell">
+            <table className="project-table visit-table">
+              <thead>
+                <tr>
+                  <th>방문 시각</th>
+                  <th>페이지 URL</th>
+                  <th>레퍼러</th>
+                  <th>ref 파라미터</th>
+                  <th>접속 IP</th>
+                  <th>User-Agent</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visits.length === 0 && (
+                  <tr>
+                    <td className="table-empty" colSpan="6">
+                      저장된 방문 로그가 없습니다.
+                    </td>
+                  </tr>
+                )}
+                {visits.map((visit) => (
+                  <tr key={visit.id}>
+                    <td className="visit-date-cell">{formatDateTime(visit.visitedAt)}</td>
+                    <td className="visit-url-cell">{visit.pageUrl || '-'}</td>
+                    <td className="visit-url-cell">{formatReferrer(visit.referrer)}</td>
+                    <td>
+                      {visit.refParam ? (
+                        <span className="ref-badge">{visit.refParam}</span>
+                      ) : (
+                        '-'
+                      )}
+                    </td>
+                    <td>{visit.ipAddress || '-'}</td>
+                    <td className="user-agent-cell">{visit.userAgent || '-'}</td>
                   </tr>
                 ))}
               </tbody>

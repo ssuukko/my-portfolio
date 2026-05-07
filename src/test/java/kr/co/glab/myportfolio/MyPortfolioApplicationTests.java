@@ -1,6 +1,7 @@
 package kr.co.glab.myportfolio;
 
 import com.portfolio.project.mapper.ProjectMapper;
+import com.portfolio.visit.mapper.VisitMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -14,6 +15,9 @@ class MyPortfolioApplicationTests {
 
     @MockBean
     private ProjectMapper projectMapper;
+
+    @MockBean
+    private VisitMapper visitMapper;
 
     @Test
     void contextLoads() {

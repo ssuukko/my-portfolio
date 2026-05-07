@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.portfolio.visit.mapper.VisitMapper">
+
+    <insert id="save" parameterType="com.portfolio.visit.domain.Visit" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO visits (
+            page_url,
+            referrer,
+            ref_param,
+            ip_address,
+            user_agent,
+            visited_at
+        )
+        VALUES (
+            #{pageUrl},
+            #{referrer},
+            #{refParam},
+            #{ipAddress},
+            #{userAgent},
+            #{visitedAt}
+        )
+    </insert>
+
+    <select id="findRecent" resultType="com.portfolio.visit.domain.Visit">
+        SELECT
+            id,
+            page_url,
+            referrer,
+            ref_param,
+            ip_address,
+            user_agent,
+            visited_at
+        FROM visits
+        ORDER BY visited_at DESC, id DESC
+    </select>
+
+</mapper>

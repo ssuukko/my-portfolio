@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { fetchProject } from '../api/projectApi'
+import { fetchProject, logVisit } from '../api/projectApi'
 
 const formatDate = (date) => {
   if (!date) {
@@ -148,6 +148,21 @@ function ProjectDetailPage() {
   const [errorMessage, setErrorMessage] = useState('')
 
   useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search)
+    const refParam = searchParams.get('ref')?.trim() ?? ''
+
+    if (refParam !== 'admin') {
+      const referrer = refParam || document.referrer || 'direct'
+
+      logVisit({
+        pageUrl: window.location.href,
+        referrer,
+        refParam: refParam || null,
+      }).catch((error) => {
+        console.error('Failed to log visit:', error)
+      })
+    }
+
     const loadProject = async () => {
       try {
         const projectData = await fetchProject(id)

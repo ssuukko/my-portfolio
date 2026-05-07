@@ -205,6 +205,32 @@ body {
   gap: 16px;
 }
 
+.admin-tabs {
+  display: flex;
+  width: fit-content;
+  padding: 4px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  box-shadow: var(--shadow-soft);
+}
+
+.admin-tab {
+  min-height: 38px;
+  padding: 0 18px;
+  border: 0;
+  color: var(--muted);
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.admin-tab.active {
+  color: #ffffff;
+  background: var(--accent);
+}
+
 .primary-button,
 .secondary-button,
 .table-button,
@@ -464,6 +490,42 @@ body {
 
 .project-title-cell {
   color: var(--ink);
+  font-weight: 850;
+}
+
+.visit-table {
+  min-width: 1280px;
+}
+
+.visit-date-cell {
+  color: var(--ink);
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.visit-url-cell,
+.user-agent-cell {
+  max-width: 320px;
+  overflow: hidden;
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-agent-cell {
+  max-width: 420px;
+}
+
+.ref-badge {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  padding: 0 10px;
+  border: 1px solid rgba(37, 99, 235, 0.18);
+  border-radius: 999px;
+  color: var(--accent-dark);
+  background: var(--accent-soft);
+  font-size: 12px;
   font-weight: 850;
 }
 
@@ -1851,6 +1913,14 @@ body {
   .server-status {
     max-width: none;
     border-radius: 12px;
+  }
+
+  .admin-tabs {
+    width: 100%;
+  }
+
+  .admin-tab {
+    flex: 1;
   }
 
   .portfolio-hero h1 {
