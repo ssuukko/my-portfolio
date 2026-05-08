@@ -497,6 +497,17 @@ body {
   min-width: 1280px;
 }
 
+.visit-group-row {
+  color: var(--ink);
+  font-weight: 760;
+}
+
+.visit-ip-cell {
+  color: var(--ink);
+  font-weight: 900;
+  white-space: nowrap;
+}
+
 .visit-date-cell {
   color: var(--ink);
   font-weight: 750;
@@ -514,6 +525,47 @@ body {
 
 .user-agent-cell {
   max-width: 420px;
+}
+
+.visit-drop-button {
+  min-width: 68px;
+}
+
+.visit-detail-row td {
+  padding: 0;
+  background: rgba(250, 249, 245, 0.78);
+}
+
+.visit-detail-panel {
+  overflow-x: auto;
+  padding: 14px;
+}
+
+.visit-detail-table {
+  width: 100%;
+  min-width: 1040px;
+  border-collapse: collapse;
+  background: rgba(255, 254, 250, 0.9);
+}
+
+.visit-detail-table th,
+.visit-detail-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+
+.visit-detail-table th {
+  color: var(--quiet);
+  background: rgba(242, 240, 234, 0.82);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.visit-detail-table tbody tr:last-child td {
+  border-bottom: 0;
 }
 
 .ref-badge {

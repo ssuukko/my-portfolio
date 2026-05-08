@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ProjectFormModal from '../components/ProjectFormModal'
 import {
@@ -53,6 +53,26 @@ const formatReferrer = (referrer) => {
   return referrer
 }
 
+const getIpAddress = (visit) => visit.ipAddress || 'IP 없음'
+
+const groupVisitsByIp = (visitList) =>
+  visitList.reduce((groups, visit) => {
+    const ipAddress = getIpAddress(visit)
+    const existingGroup = groups.get(ipAddress)
+
+    if (existingGroup) {
+      existingGroup.visits.push(visit)
+      return groups
+    }
+
+    groups.set(ipAddress, {
+      ipAddress,
+      visits: [visit],
+    })
+
+    return groups
+  }, new Map())
+
 const getProjectPayload = (project, useYn = project.useYn ?? 'Y') => ({
   title: project.title,
   summary: project.summary,
@@ -88,6 +108,33 @@ function AdminPage() {
   const [visitErrorMessage, setVisitErrorMessage] = useState('')
   const [selectedProject, setSelectedProject] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [expandedVisitGroups, setExpandedVisitGroups] = useState({})
+
+  const visitGroups = useMemo(
+    () =>
+      Array.from(groupVisitsByIp(visits).values())
+        .map((group) => {
+          const sortedVisits = [...group.visits].sort(
+            (firstVisit, secondVisit) =>
+              new Date(secondVisit.visitedAt).getTime() -
+                new Date(firstVisit.visitedAt).getTime() ||
+              (secondVisit.id ?? 0) - (firstVisit.id ?? 0),
+          )
+
+          return {
+            ...group,
+            visits: sortedVisits,
+            firstVisitedAt: sortedVisits[sortedVisits.length - 1]?.visitedAt,
+            lastVisitedAt: sortedVisits[0]?.visitedAt,
+          }
+        })
+        .sort(
+          (firstGroup, secondGroup) =>
+            new Date(secondGroup.lastVisitedAt).getTime() -
+            new Date(firstGroup.lastVisitedAt).getTime(),
+        ),
+    [visits],
+  )
 
   const loadProjects = async (showLoading = true) => {
     try {
@@ -222,6 +269,13 @@ function AdminPage() {
     await loadProjects(false)
   }
 
+  const handleToggleVisitGroup = (ipAddress) => {
+    setExpandedVisitGroups((currentGroups) => ({
+      ...currentGroups,
+      [ipAddress]: !currentGroups[ipAddress],
+    }))
+  }
+
   return (
     <div className="dashboard admin-dashboard">
       <header className="dashboard-header">
@@ -258,7 +312,9 @@ function AdminPage() {
             </h2>
           </div>
           <span className="project-count">
-            {activeTab === 'projects' ? projects.length : visits.length}개
+            {activeTab === 'projects'
+              ? `${projects.length}개`
+              : `${visitGroups.length}개 IP / ${visits.length}회`}
           </span>
         </section>
 
@@ -392,37 +448,92 @@ function AdminPage() {
             <table className="project-table visit-table">
               <thead>
                 <tr>
-                  <th>방문 시각</th>
-                  <th>페이지 URL</th>
-                  <th>레퍼러</th>
-                  <th>ref 파라미터</th>
                   <th>접속 IP</th>
-                  <th>User-Agent</th>
+                  <th>방문 횟수</th>
+                  <th>최근 방문</th>
+                  <th>첫 방문</th>
+                  <th>최근 페이지</th>
+                  <th>상세</th>
                 </tr>
               </thead>
               <tbody>
-                {visits.length === 0 && (
+                {visitGroups.length === 0 && (
                   <tr>
                     <td className="table-empty" colSpan="6">
                       저장된 방문 로그가 없습니다.
                     </td>
                   </tr>
                 )}
-                {visits.map((visit) => (
-                  <tr key={visit.id}>
-                    <td className="visit-date-cell">{formatDateTime(visit.visitedAt)}</td>
-                    <td className="visit-url-cell">{visit.pageUrl || '-'}</td>
-                    <td className="visit-url-cell">{formatReferrer(visit.referrer)}</td>
-                    <td>
-                      {visit.refParam ? (
-                        <span className="ref-badge">{visit.refParam}</span>
-                      ) : (
-                        '-'
-                      )}
-                    </td>
-                    <td>{visit.ipAddress || '-'}</td>
-                    <td className="user-agent-cell">{visit.userAgent || '-'}</td>
-                  </tr>
+                {visitGroups.map((group) => (
+                  <Fragment key={group.ipAddress}>
+                    <tr className="visit-group-row">
+                      <td className="visit-ip-cell">{group.ipAddress}</td>
+                      <td>{group.visits.length}회</td>
+                      <td className="visit-date-cell">
+                        {formatDateTime(group.lastVisitedAt)}
+                      </td>
+                      <td className="visit-date-cell">
+                        {formatDateTime(group.firstVisitedAt)}
+                      </td>
+                      <td className="visit-url-cell">{group.visits[0]?.pageUrl || '-'}</td>
+                      <td>
+                        <button
+                          className="table-button visit-drop-button"
+                          type="button"
+                          onClick={() => handleToggleVisitGroup(group.ipAddress)}
+                          aria-expanded={!!expandedVisitGroups[group.ipAddress]}
+                        >
+                          {expandedVisitGroups[group.ipAddress] ? '닫기' : '드롭'}
+                        </button>
+                      </td>
+                    </tr>
+                    {expandedVisitGroups[group.ipAddress] && (
+                      <tr className="visit-detail-row">
+                        <td colSpan="6">
+                          <div className="visit-detail-panel">
+                            <table className="visit-detail-table">
+                              <thead>
+                                <tr>
+                                  <th>방문 시각</th>
+                                  <th>페이지 URL</th>
+                                  <th>레퍼러</th>
+                                  <th>ref 파라미터</th>
+                                  <th>User-Agent</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {group.visits.map((visit) => (
+                                  <tr key={visit.id}>
+                                    <td className="visit-date-cell">
+                                      {formatDateTime(visit.visitedAt)}
+                                    </td>
+                                    <td className="visit-url-cell">
+                                      {visit.pageUrl || '-'}
+                                    </td>
+                                    <td className="visit-url-cell">
+                                      {formatReferrer(visit.referrer)}
+                                    </td>
+                                    <td>
+                                      {visit.refParam ? (
+                                        <span className="ref-badge">
+                                          {visit.refParam}
+                                        </span>
+                                      ) : (
+                                        '-'
+                                      )}
+                                    </td>
+                                    <td className="user-agent-cell">
+                                      {visit.userAgent || '-'}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
                 ))}
               </tbody>
             </table>
