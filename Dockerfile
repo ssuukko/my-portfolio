@@ -4,7 +4,7 @@ WORKDIR /app
 
 COPY . .
 RUN chmod +x ./gradlew
-RUN ./gradlew clean build -x test
+RUN ./gradlew --no-daemon clean bootJar -x test
 
 FROM eclipse-temurin:17-jre-alpine
 
@@ -14,4 +14,4 @@ COPY --from=builder /app/build/libs/*-SNAPSHOT.jar app.jar
 
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Duser.timezone=Asia/Seoul", "-jar", "app.jar"]

@@ -137,8 +137,7 @@ function AdminPage() {
         })
         .sort(
           (firstGroup, secondGroup) =>
-            new Date(secondGroup.lastVisitedAt).getTime() -
-            new Date(firstGroup.lastVisitedAt).getTime(),
+            (secondGroup.visits[0]?.id ?? 0) - (firstGroup.visits[0]?.id ?? 0),
         ),
     [visits],
   )
@@ -320,6 +319,10 @@ function AdminPage() {
     }))
   }
 
+  const handleRefreshVisits = () => {
+    loadVisits(true)
+  }
+
   if (!isAuthenticated) {
     return (
       <div className="dashboard admin-dashboard">
@@ -405,6 +408,16 @@ function AdminPage() {
               ? `${projects.length}개`
               : `${visitGroups.length}개 IP / ${visits.length}회`}
           </span>
+          {activeTab === 'visits' && (
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={handleRefreshVisits}
+              disabled={isVisitsLoading}
+            >
+              {isVisitsLoading ? '새로고침 중...' : '새로고침'}
+            </button>
+          )}
         </section>
 
         <div className="admin-tabs" role="tablist" aria-label="관리자 메뉴">
