@@ -1,4 +1,6 @@
-const baseURL = import.meta.env.VITE_API_URL?.replace(/\/$/, '') ?? ''
+const baseURL = (
+  import.meta.env.VITE_API_URL || 'https://my-portfolio-yol2.onrender.com'
+).replace(/\/$/, '')
 const cachedBaseURL = import.meta.env.PROD ? '' : baseURL
 const DEFAULT_TIMEOUT_MS = 12000
 
