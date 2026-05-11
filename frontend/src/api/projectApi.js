@@ -3,8 +3,24 @@ const baseURL = (
 ).replace(/\/$/, '')
 const cachedBaseURL = import.meta.env.PROD ? '' : baseURL
 const DEFAULT_TIMEOUT_MS = 12000
+const ADMIN_AUTH_STORAGE_KEY = 'portfolioAdminAuth'
 
 export const buildApiUrl = (path, { cached = false } = {}) => `${cached ? cachedBaseURL : baseURL}${path}`
+
+export const getAdminAuth = () =>
+  window.sessionStorage.getItem(ADMIN_AUTH_STORAGE_KEY) ?? ''
+
+export const setAdminCredentials = (username, password) => {
+  window.sessionStorage.setItem(ADMIN_AUTH_STORAGE_KEY, window.btoa(`${username}:${password}`))
+}
+
+export const clearAdminAuth = () => {
+  window.sessionStorage.removeItem(ADMIN_AUTH_STORAGE_KEY)
+}
+
+const getAdminHeaders = () => ({
+  Authorization: `Basic ${getAdminAuth()}`,
+})
 
 const parseResponse = async (response) => {
   const contentType = response.headers.get('content-type') ?? ''
@@ -62,7 +78,9 @@ const request = async (path, options = {}) => {
 }
 
 export const fetchProjects = async () => {
-  const data = await request('/api/projects')
+  const data = await request('/api/projects', {
+    headers: getAdminHeaders(),
+  })
   return data.data ?? []
 }
 
@@ -107,7 +125,9 @@ export const logVisit = async (body) => {
 }
 
 export const fetchVisits = async () => {
-  const data = await request('/api/visits')
+  const data = await request('/api/visits', {
+    headers: getAdminHeaders(),
+  })
   return data.data ?? []
 }
 
@@ -115,6 +135,7 @@ export const createProject = async (body) => {
   const data = await request('/api/projects', {
     method: 'POST',
     headers: {
+      ...getAdminHeaders(),
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(body),
@@ -127,6 +148,7 @@ export const updateProject = async (id, body) => {
   const data = await request(`/api/projects/${id}`, {
     method: 'PUT',
     headers: {
+      ...getAdminHeaders(),
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(body),
@@ -139,6 +161,7 @@ export const updateProjectOrder = async (projectIds) => {
   const data = await request('/api/projects/order', {
     method: 'PUT',
     headers: {
+      ...getAdminHeaders(),
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ projectIds }),
@@ -150,6 +173,7 @@ export const updateProjectOrder = async (projectIds) => {
 export const deleteProject = async (id) => {
   const data = await request(`/api/projects/${id}`, {
     method: 'DELETE',
+    headers: getAdminHeaders(),
   })
 
   return data.data

@@ -7,6 +7,9 @@ const apiUrl = (
   process.env.VITE_API_URL ||
   'https://my-portfolio-yol2.onrender.com'
 ).replace(/\/$/, '')
+const adminUsername = process.env.PORTFOLIO_ADMIN_USERNAME || 'ssh'
+const adminPassword = process.env.PORTFOLIO_ADMIN_PASSWORD || 'ssh'
+const adminAuth = Buffer.from(`${adminUsername}:${adminPassword}`, 'utf8').toString('base64')
 
 const rootDir = process.cwd()
 const publicDir = path.join(rootDir, 'public')
@@ -61,6 +64,7 @@ const fetchProjects = async () => {
     const response = await fetch(`${apiUrl}/api/projects`, {
       headers: {
         Accept: 'application/json',
+        Authorization: `Basic ${adminAuth}`,
       },
       signal: controller.signal,
     })

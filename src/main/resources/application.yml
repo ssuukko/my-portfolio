@@ -21,3 +21,7 @@ server:
 
 vercel:
   deploy-hook-url: ${VERCEL_DEPLOY_HOOK_URL:}
+
+portfolio:
+  admin-username: ${PORTFOLIO_ADMIN_USERNAME:ssh}
+  admin-password: ${PORTFOLIO_ADMIN_PASSWORD:ssh}

@@ -3,9 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import ProjectFormModal from '../components/ProjectFormModal'
 import {
   createProject,
+  clearAdminAuth,
   deleteProject,
   fetchProjects,
   fetchVisits,
+  getAdminAuth,
+  setAdminCredentials,
   updateProjectOrder,
   updateProject,
 } from '../api/projectApi'
@@ -99,6 +102,10 @@ const markAdminSession = () => {
 
 function AdminPage() {
   const navigate = useNavigate()
+  const [isAuthenticated, setIsAuthenticated] = useState(() => Boolean(getAdminAuth()))
+  const [adminUsernameInput, setAdminUsernameInput] = useState('')
+  const [adminPasswordInput, setAdminPasswordInput] = useState('')
+  const [loginErrorMessage, setLoginErrorMessage] = useState('')
   const [projects, setProjects] = useState([])
   const [visits, setVisits] = useState([])
   const [activeTab, setActiveTab] = useState('projects')
@@ -171,6 +178,12 @@ function AdminPage() {
   }
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      setIsLoading(false)
+      setIsVisitsLoading(false)
+      return
+    }
+
     markAdminSession()
 
     const loadInitialData = async () => {
@@ -185,6 +198,9 @@ function AdminPage() {
         console.error('Failed to load admin data:', error)
         setErrorMessage(error.message || '관리자 데이터를 불러오지 못했습니다.')
         setVisitErrorMessage(error.message || '관리자 데이터를 불러오지 못했습니다.')
+        clearAdminAuth()
+        setIsAuthenticated(false)
+        setLoginErrorMessage('관리자 인증에 실패했습니다.')
       } finally {
         setIsLoading(false)
         setIsVisitsLoading(false)
@@ -192,7 +208,35 @@ function AdminPage() {
     }
 
     loadInitialData()
-  }, [])
+  }, [isAuthenticated])
+
+  const handleLoginSubmit = async (event) => {
+    event.preventDefault()
+
+    const username = adminUsernameInput.trim()
+    const password = adminPasswordInput
+
+    if (!username || !password) {
+      setLoginErrorMessage('아이디와 비밀번호를 입력해 주세요.')
+      return
+    }
+
+    setAdminCredentials(username, password)
+    setLoginErrorMessage('')
+    setIsLoading(true)
+    setIsVisitsLoading(true)
+    setIsAuthenticated(true)
+  }
+
+  const handleLogout = () => {
+    clearAdminAuth()
+    window.sessionStorage.removeItem('portfolioAdminSession')
+    setIsAuthenticated(false)
+    setAdminUsernameInput('')
+    setAdminPasswordInput('')
+    setProjects([])
+    setVisits([])
+  }
 
   const handleCreateClick = () => {
     setSelectedProject(null)
@@ -276,6 +320,48 @@ function AdminPage() {
     }))
   }
 
+  if (!isAuthenticated) {
+    return (
+      <div className="dashboard admin-dashboard">
+        <main className="dashboard-main">
+          <section className="section-heading" aria-labelledby="admin-login-heading">
+            <div>
+              <p className="eyebrow">Admin</p>
+              <h1 id="admin-login-heading">관리자 로그인</h1>
+            </div>
+          </section>
+
+          <form className="project-form" onSubmit={handleLoginSubmit}>
+            <label>
+              <span>아이디</span>
+              <input
+                type="text"
+                value={adminUsernameInput}
+                onChange={(event) => setAdminUsernameInput(event.target.value)}
+                autoComplete="username"
+              />
+            </label>
+            <label>
+              <span>비밀번호</span>
+              <input
+                type="password"
+                value={adminPasswordInput}
+                onChange={(event) => setAdminPasswordInput(event.target.value)}
+                autoComplete="current-password"
+              />
+            </label>
+            {loginErrorMessage && (
+              <div className="empty-state error-message">{loginErrorMessage}</div>
+            )}
+            <button className="primary-button" type="submit">
+              로그인
+            </button>
+          </form>
+        </main>
+      </div>
+    )
+  }
+
   return (
     <div className="dashboard admin-dashboard">
       <header className="dashboard-header">
@@ -296,6 +382,9 @@ function AdminPage() {
             }}
           >
             ← 포트폴리오
+          </button>
+          <button className="secondary-button" type="button" onClick={handleLogout}>
+            로그아웃
           </button>
           <button className="primary-button" type="button" onClick={handleCreateClick}>
             + 새 프로젝트
