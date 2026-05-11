@@ -102,6 +102,25 @@
         ORDER BY display_order ASC, id DESC
     </select>
 
+    <select id="findSummaries" resultType="com.portfolio.project.domain.Project">
+        SELECT
+            id,
+            title,
+            summary,
+            thumbnail_url,
+            project_url,
+            start_date,
+            end_date,
+            use_yn,
+            github_url,
+            deploy_url,
+            display_order,
+            created_at,
+            updated_at
+        FROM projects
+        ORDER BY display_order ASC, id DESC
+    </select>
+
     <select id="findNextDisplayOrder" resultType="int">
         SELECT COALESCE(MAX(display_order), 0) + 1
         FROM projects

@@ -17,6 +17,8 @@ public interface ProjectMapper {
 
     List<Project> findAll();
 
+    List<Project> findSummaries();
+
     Integer findNextDisplayOrder();
 
     void update(Project project);

@@ -49,6 +49,14 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    public List<ProjectResponse> getProjectSummaries() {
+        return projectMapper.findSummaries()
+                .stream()
+                .map(ProjectResponse::fromSummary)
+                .toList();
+    }
+
+    @Override
     @Transactional
     public void updateProject(Long id, ProjectUpdateRequest request) {
         Project project = findProject(id);

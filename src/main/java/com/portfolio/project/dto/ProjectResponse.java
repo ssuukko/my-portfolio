@@ -52,4 +52,35 @@ public record ProjectResponse(
                 project.getUpdatedAt()
         );
     }
+
+    public static ProjectResponse fromSummary(Project project) {
+        String thumbnailUrl = project.getThumbnailUrl();
+
+        return new ProjectResponse(
+                project.getId(),
+                project.getTitle(),
+                project.getSummary(),
+                null,
+                isDataUrl(thumbnailUrl) ? null : thumbnailUrl,
+                null,
+                null,
+                project.getProjectUrl(),
+                project.getStartDate(),
+                project.getEndDate(),
+                project.getUseYn(),
+                null,
+                null,
+                null,
+                project.getGithubUrl(),
+                project.getDeployUrl(),
+                null,
+                project.getDisplayOrder(),
+                project.getCreatedAt(),
+                project.getUpdatedAt()
+        );
+    }
+
+    private static boolean isDataUrl(String value) {
+        return value != null && value.regionMatches(true, 0, "data:", 0, 5);
+    }
 }

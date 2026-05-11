@@ -15,6 +15,8 @@ public interface ProjectService {
 
     List<ProjectResponse> getAllProjects();
 
+    List<ProjectResponse> getProjectSummaries();
+
     void updateProject(Long id, ProjectUpdateRequest request);
 
     void updateProjectOrder(ProjectOrderUpdateRequest request);
