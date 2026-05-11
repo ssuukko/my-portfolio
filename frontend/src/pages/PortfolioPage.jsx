@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { fetchProjects, logVisit } from '../api/projectApi'
+import {
+  buildApiUrl,
+  fetchProjectSummaries,
+  fetchStaticProjectSummaries,
+  logVisit,
+} from '../api/projectApi'
 
 const formatDate = (date) => {
   if (!date) {
@@ -17,6 +22,26 @@ const formatDate = (date) => {
 const isProjectEnabled = (project) => project.useYn !== 'N'
 
 const getProjectInitial = (title) => title?.trim()?.slice(0, 1) || 'P'
+
+const getProjectThumbnailUrl = (project) => (
+  project.thumbnailUrl || (
+    project.id
+      ? buildApiUrl(
+          `/api/projects/${project.id}/thumbnail?v=${encodeURIComponent(project.updatedAt ?? '')}`,
+          { cached: true },
+        )
+      : ''
+  )
+)
+
+const showProjectPlaceholder = (event) => {
+  event.currentTarget.hidden = true
+  const placeholder = event.currentTarget.nextElementSibling
+
+  if (placeholder) {
+    placeholder.hidden = false
+  }
+}
 
 const isAdminVisit = () => {
   const searchParams = new URLSearchParams(window.location.search)
@@ -61,12 +86,27 @@ function PortfolioPage() {
     }
 
     const fetchDashboardData = async () => {
+      let hasSnapshot = false
+
       try {
-        const projectList = await fetchProjects()
+        const snapshotProjects = await fetchStaticProjectSummaries()
+        setProjects(snapshotProjects.filter(isProjectEnabled))
+        setIsLoading(false)
+        setErrorMessage('')
+        hasSnapshot = true
+      } catch (error) {
+        console.warn('Failed to load static project snapshot:', error)
+      }
+
+      try {
+        const projectList = await fetchProjectSummaries()
         setProjects(projectList.filter(isProjectEnabled))
+        setErrorMessage('')
       } catch (error) {
         console.error('Failed to connect to server:', error)
-        setErrorMessage('서버에 연결할 수 없습니다.')
+        if (!hasSnapshot) {
+          setErrorMessage(error.message || '서버에 연결할 수 없습니다.')
+        }
       } finally {
         setIsLoading(false)
       }
@@ -135,8 +175,20 @@ function PortfolioPage() {
                 }
               >
                 <div className="pf-card__media">
-                  {project.thumbnailUrl ? (
-                    <img className="pf-card__img" src={project.thumbnailUrl} alt={`${project.title} 썸네일`} />
+                  {getProjectThumbnailUrl(project) ? (
+                    <>
+                      <img
+                        className="pf-card__img"
+                        src={getProjectThumbnailUrl(project)}
+                        alt={`${project.title} 썸네일`}
+                        loading={index === 0 ? 'eager' : 'lazy'}
+                        decoding="async"
+                        onError={showProjectPlaceholder}
+                      />
+                      <div className="pd-hero__placeholder" hidden>
+                        <span>{getProjectInitial(project.title)}</span>
+                      </div>
+                    </>
                   ) : (
                     <div className="pd-hero__placeholder">
                       <span>{getProjectInitial(project.title)}</span>
