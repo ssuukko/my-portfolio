@@ -29,12 +29,12 @@ portfolio:
 langchain4j:
   open-ai:
     chat-model:
-      api-key: ${OPENAI_API_KEY}
+      api-key: ${OPENAI_API_KEY:}
       model-name: gpt-4o-mini
     embedding-model:
-      api-key: ${OPENAI_API_KEY}
+      api-key: ${OPENAI_API_KEY:}
       model-name: text-embedding-3-small
 
 pinecone:
-  api-key: ${PINECONE_API_KEY}
-  index-name: ${PINECONE_INDEX_NAME}
+  api-key: ${PINECONE_API_KEY:}
+  index-name: ${PINECONE_INDEX_NAME:}
