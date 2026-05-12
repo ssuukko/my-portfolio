@@ -5,7 +5,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication(scanBasePackages = {"kr.co.glab.myportfolio", "com.portfolio"})
-@MapperScan({"com.portfolio.project.mapper", "com.portfolio.visit.mapper"})
+@MapperScan({"com.portfolio.project.mapper", "com.portfolio.visit.mapper", "com.portfolio.chat.mapper"})
 public class MyPortfolioApplication {
 
     public static void main(String[] args) {

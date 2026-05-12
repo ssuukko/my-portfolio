@@ -3,6 +3,7 @@ package com.portfolio.project.service;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.portfolio.chat.service.PineconeProjectSyncService;
 import com.portfolio.project.domain.Project;
 import com.portfolio.project.dto.ProjectCreateRequest;
 import com.portfolio.project.dto.ProjectOrderUpdateRequest;
@@ -22,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 public class ProjectServiceImpl implements ProjectService {
 
     private final ProjectMapper projectMapper;
+    private final PineconeProjectSyncService pineconeProjectSyncService;
 
     @Override
     @Transactional
@@ -31,6 +33,7 @@ public class ProjectServiceImpl implements ProjectService {
             project.updateDisplayOrder(projectMapper.findNextDisplayOrder());
         }
         projectMapper.save(project);
+        pineconeProjectSyncService.upsert(project);
         return project.getId();
     }
 
@@ -80,6 +83,7 @@ public class ProjectServiceImpl implements ProjectService {
                 request.displayOrder() == null ? project.getDisplayOrder() : request.displayOrder()
         );
         projectMapper.update(project);
+        pineconeProjectSyncService.upsert(project);
     }
 
     @Override
@@ -103,6 +107,7 @@ public class ProjectServiceImpl implements ProjectService {
     public void deleteProject(Long id) {
         Project project = findProject(id);
         projectMapper.deleteById(project.getId());
+        pineconeProjectSyncService.delete(project.getId());
     }
 
     private Project findProject(Long id) {

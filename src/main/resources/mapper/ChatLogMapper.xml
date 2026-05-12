@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.portfolio.chat.mapper.ChatLogMapper">
+
+    <insert id="save" parameterType="com.portfolio.chat.domain.ChatLog" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO chat_logs (
+            question,
+            answer,
+            success_yn,
+            error_message,
+            created_at
+        )
+        VALUES (
+            #{question},
+            #{answer},
+            #{successYn},
+            #{errorMessage},
+            #{createdAt}
+        )
+    </insert>
+
+</mapper>
