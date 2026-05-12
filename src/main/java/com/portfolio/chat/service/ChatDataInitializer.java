@@ -6,9 +6,11 @@ import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.store.embedding.EmbeddingStore;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -23,8 +25,17 @@ public class ChatDataInitializer {
     private final EmbeddingStore<TextSegment> embeddingStore;
     private final PineconeProjectSyncService pineconeProjectSyncService;
 
-    @PostConstruct
+    @Async
+    @EventListener(ApplicationReadyEvent.class)
     public void initialize() {
+        try {
+            initializePinecone();
+        } catch (Exception exception) {
+            log.warn("Chat embedding initialization skipped: {}", exception.getMessage(), exception);
+        }
+    }
+
+    private void initializePinecone() {
         List<Project> projects = projectMapper.findAll();
 
         if (!isPineconeIndexEmpty()) {
