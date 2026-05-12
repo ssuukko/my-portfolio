@@ -25,3 +25,16 @@ vercel:
 portfolio:
   admin-username: ${PORTFOLIO_ADMIN_USERNAME:ssh}
   admin-password: ${PORTFOLIO_ADMIN_PASSWORD:ssh}
+
+langchain4j:
+  open-ai:
+    chat-model:
+      api-key: ${OPENAI_API_KEY}
+      model-name: gpt-4o-mini
+    embedding-model:
+      api-key: ${OPENAI_API_KEY}
+      model-name: text-embedding-3-small
+
+pinecone:
+  api-key: ${PINECONE_API_KEY}
+  index-name: ${PINECONE_INDEX_NAME}

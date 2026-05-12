@@ -5,7 +5,7 @@
 
 <mapper namespace="com.portfolio.project.mapper.ProjectMapper">
 
-    <insert id="save" parameterType="com.portfolio.project.domain.Project" useGeneratedKeys="true" keyProperty="id">
+    <insert id="save" parameterType="Project" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO projects (
             title,
             summary,
@@ -50,7 +50,7 @@
         )
     </insert>
 
-    <select id="findById" parameterType="long" resultType="com.portfolio.project.domain.Project">
+    <select id="findById" parameterType="long" resultType="Project">
         SELECT
             id,
             title,
@@ -76,7 +76,7 @@
         WHERE id = #{id}
     </select>
 
-    <select id="findAll" resultType="com.portfolio.project.domain.Project">
+    <select id="findAll" resultType="Project">
         SELECT
             id,
             title,
@@ -102,7 +102,7 @@
         ORDER BY display_order ASC, id DESC
     </select>
 
-    <select id="findSummaries" resultType="com.portfolio.project.domain.Project">
+    <select id="findSummaries" resultType="Project">
         SELECT
             id,
             title,
@@ -126,7 +126,7 @@
         FROM projects
     </select>
 
-    <update id="update" parameterType="com.portfolio.project.domain.Project">
+    <update id="update" parameterType="Project">
         UPDATE projects
         SET
             title = #{title},
