@@ -29,10 +29,6 @@ public class Project {
     private String deployUrl;
     private String result;
     private Integer displayOrder;
-    private String attachmentFilename;
-    private String attachmentContentType;
-    private Long attachmentFileSize;
-    private byte[] attachmentData;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -166,28 +162,6 @@ public class Project {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public void updateAttachment(
-            String attachmentFilename,
-            String attachmentContentType,
-            Long attachmentFileSize,
-            byte[] attachmentData
-    ) {
-        validateAttachment(attachmentFilename, attachmentFileSize, attachmentData);
-        this.attachmentFilename = attachmentFilename;
-        this.attachmentContentType = attachmentContentType;
-        this.attachmentFileSize = attachmentFileSize;
-        this.attachmentData = attachmentData;
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    public void deleteAttachment() {
-        this.attachmentFilename = null;
-        this.attachmentContentType = null;
-        this.attachmentFileSize = null;
-        this.attachmentData = null;
-        this.updatedAt = LocalDateTime.now();
-    }
-
     private void validateTitle(String title) {
         if (title == null || title.isBlank()) {
             throw new IllegalArgumentException("프로젝트 제목은 필수입니다.");
@@ -222,15 +196,5 @@ public class Project {
         }
 
         return displayOrder;
-    }
-
-    private void validateAttachment(String filename, Long fileSize, byte[] fileData) {
-        if (filename == null || filename.isBlank()) {
-            throw new IllegalArgumentException("첨부파일명은 필수입니다.");
-        }
-
-        if (fileSize == null || fileSize <= 0 || fileData == null || fileData.length == 0) {
-            throw new IllegalArgumentException("첨부파일이 비어 있습니다.");
-        }
     }
 }

@@ -655,38 +655,6 @@ body {
   transform: translateY(-1px);
 }
 
-.attachment-cell {
-  display: grid;
-  min-width: 170px;
-  gap: 6px;
-}
-
-.attachment-cell span {
-  max-width: 180px;
-  overflow: hidden;
-  color: var(--ink);
-  font-size: 13px;
-  font-weight: 800;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.attachment-cell small,
-.attachment-empty {
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.attachment-cell .danger-button,
-.attachment-upload {
-  width: fit-content;
-}
-
-.attachment-upload input {
-  display: none;
-}
-
 /* ═══════════════════════════════════════════════════
    Project Detail Page — Premium Editorial Layout
    ═══════════════════════════════════════════════════ */
@@ -971,7 +939,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: 7px;
-  min-height: 44px;
+  height: 42px;
   padding: 0 20px;
   border: 0;
   border-radius: 999px;
@@ -2147,7 +2115,7 @@ body {
   }
 
   .pd-section__body {
-    padding-left: 0;
+    padding-left: 48px;
   }
 
   .pd-footer {
@@ -2213,69 +2181,5 @@ body {
 
   .pf-card__title {
     font-size: 22px;
-  }
-
-  /* ── 모바일 터치 최적화 ── */
-  .pf-card__overlay {
-    opacity: 1;
-    background: linear-gradient(0deg, rgba(23, 25, 31, 0.5) 0%, transparent 50%);
-    backdrop-filter: none;
-  }
-
-  .pf-card__view-btn {
-    position: absolute;
-    bottom: 12px;
-    right: 12px;
-    transform: none;
-    padding: 8px 16px;
-    font-size: 12px;
-  }
-
-  .pf-card:hover .pf-card__view-btn {
-    transform: none;
-  }
-
-  .pd-back-btn {
-    min-height: 44px;
-  }
-
-  .pd-badge {
-    height: 32px;
-  }
-}
-
-/* ── 초소형 화면 (480px 이하) ── */
-@media (max-width: 480px) {
-  .pf-hero__title {
-    font-size: 32px;
-  }
-
-  .pf-hero__desc {
-    font-size: 15px;
-  }
-
-  .pd-hero__title {
-    font-size: 26px;
-  }
-
-  .pd-section__title {
-    font-size: 19px;
-  }
-
-  .pd-section__header {
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .pd-feature-gallery__header h2 {
-    font-size: 24px;
-  }
-
-  .pd-content__heading {
-    font-size: 22px;
-  }
-
-  .pd-footer__text h2 {
-    font-size: 20px;
   }
 }

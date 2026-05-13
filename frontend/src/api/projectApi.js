@@ -5,14 +5,6 @@ const cachedBaseURL = import.meta.env.PROD ? '' : baseURL
 const DEFAULT_TIMEOUT_MS = 12000
 const ADMIN_AUTH_STORAGE_KEY = 'portfolioAdminAuth'
 
-class ApiRequestError extends Error {
-  constructor(message, status) {
-    super(message)
-    this.name = 'ApiRequestError'
-    this.status = status
-  }
-}
-
 export const buildApiUrl = (path, { cached = false } = {}) => `${cached ? cachedBaseURL : baseURL}${path}`
 
 export const getAdminAuth = () =>
@@ -32,16 +24,12 @@ const getAdminHeaders = () => ({
 
 const parseResponse = async (response) => {
   const contentType = response.headers.get('content-type') ?? ''
-  const text = await response.text()
-
-  if (!text) {
-    return null
-  }
 
   if (contentType.includes('application/json')) {
-    return JSON.parse(text)
+    return response.json()
   }
 
+  const text = await response.text()
   throw new Error(
     text.includes('<!doctype html') || text.includes('<html')
       ? 'API 서버 대신 프론트엔드 페이지가 응답했습니다. VITE_API_URL 배포 환경 변수를 확인해 주세요.'
@@ -73,15 +61,6 @@ const request = async (path, options = {}) => {
       throw new Error('API 서버 응답이 지연되고 있습니다. 잠시 후 다시 시도해 주세요.')
     }
 
-    if (response && !response.ok) {
-      throw new ApiRequestError(
-        response.status === 401
-          ? '관리자 인증이 필요합니다.'
-          : error.message || 'API 요청 처리 중 오류가 발생했습니다.',
-        response.status,
-      )
-    }
-
     throw error
   } finally {
     window.clearTimeout(timeoutId)
@@ -92,13 +71,11 @@ const request = async (path, options = {}) => {
       typeof data === 'string'
         ? data
         : data?.message ?? 'API 요청 처리 중 오류가 발생했습니다.'
-    throw new ApiRequestError(message, response.status)
+    throw new Error(message)
   }
 
   return data
 }
-
-export const isAdminAuthError = (error) => error?.status === 401 || error?.status === 403
 
 export const fetchProjects = async () => {
   const data = await request('/api/projects', {
@@ -152,32 +129,6 @@ export const fetchVisits = async () => {
     headers: getAdminHeaders(),
   })
   return data.data ?? []
-}
-
-export const getProjectAttachmentDownloadUrl = (id) =>
-  buildApiUrl(`/api/projects/${id}/attachment`)
-
-export const uploadProjectAttachment = async (id, file) => {
-  const formData = new FormData()
-  formData.append('file', file)
-
-  const data = await request(`/api/projects/${id}/attachment`, {
-    method: 'POST',
-    headers: getAdminHeaders(),
-    body: formData,
-    timeout: 60000,
-  })
-
-  return data.data
-}
-
-export const deleteProjectAttachment = async (id) => {
-  const data = await request(`/api/projects/${id}/attachment`, {
-    method: 'DELETE',
-    headers: getAdminHeaders(),
-  })
-
-  return data.data
 }
 
 export const createProject = async (body) => {

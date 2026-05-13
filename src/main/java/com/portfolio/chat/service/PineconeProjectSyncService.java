@@ -10,7 +10,6 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -27,24 +26,14 @@ public class PineconeProjectSyncService {
     private final ProjectChatDocumentConverter projectChatDocumentConverter;
     private final ProjectMapper projectMapper;
 
-    @Async
     public void upsert(Project project) {
-        try {
-            upsertProjectVector(project);
-            refreshPortfolioSummary();
-        } catch (Exception exception) {
-            log.warn("Failed to sync project to Pinecone. projectId={}, message={}", project.getId(), exception.getMessage());
-        }
+        upsertProjectVector(project);
+        refreshPortfolioSummary();
     }
 
-    @Async
     public void initializeAll(List<Project> projects) {
-        try {
-            projects.forEach(this::upsertProjectVector);
-            refreshPortfolioSummary(projects);
-        } catch (Exception exception) {
-            log.warn("Failed to initialize Pinecone project documents: {}", exception.getMessage());
-        }
+        projects.forEach(this::upsertProjectVector);
+        refreshPortfolioSummary(projects);
     }
 
     private void upsertProjectVector(Project project) {
@@ -60,27 +49,17 @@ public class PineconeProjectSyncService {
         embeddingStore.add(vectorId, embedding);
     }
 
-    @Async
     public void delete(Long projectId) {
         if (projectId == null) {
             return;
         }
 
-        try {
-            removeVector(projectId.toString());
-            refreshPortfolioSummary();
-        } catch (Exception exception) {
-            log.warn("Failed to delete project from Pinecone. projectId={}, message={}", projectId, exception.getMessage());
-        }
+        removeVector(projectId.toString());
+        refreshPortfolioSummary();
     }
 
-    @Async
     public void refreshPortfolioSummary() {
-        try {
-            refreshPortfolioSummary(projectMapper.findAll());
-        } catch (Exception exception) {
-            log.warn("Failed to refresh Pinecone portfolio summary: {}", exception.getMessage());
-        }
+        refreshPortfolioSummary(projectMapper.findAll());
     }
 
     private void refreshPortfolioSummary(List<Project> projects) {
