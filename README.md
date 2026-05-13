@@ -390,6 +390,7 @@ npm run snapshot   # public/projects-summary.json 생성
 | `SPRING_DATASOURCE_URL` | PostgreSQL 접속 URL | `jdbc:postgresql://host:5432/dbname` |
 | `SPRING_DATASOURCE_USERNAME` | DB 사용자명 | `portfolio_user` |
 | `SPRING_DATASOURCE_PASSWORD` | DB 비밀번호 | `********` |
+| `SPRING_SQL_INIT_MODE` | `schema.sql` 자동 실행 여부. 운영 배포는 기본 `never`, 최초 DB 생성/수동 마이그레이션 때만 `always` 사용 | `never` |
 | `PORT` | 서버 포트 (기본 8080) | `8080` |
 | `vercel.deploy-hook-url` | Vercel Deploy Hook URL (선택) | `https://api.vercel.com/v1/...` |
 
