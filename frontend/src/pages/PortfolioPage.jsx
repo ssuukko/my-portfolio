@@ -23,6 +23,34 @@ const isProjectEnabled = (project) => project.useYn !== 'N'
 
 const getProjectInitial = (title) => title?.trim()?.slice(0, 1) || 'P'
 
+const mergeProjects = (snapshotProjects, liveProjects) => {
+  const snapshotById = new Map(
+    snapshotProjects
+      .filter((project) => project.id)
+      .map((project) => [project.id, project]),
+  )
+  const liveIds = new Set(liveProjects.map((project) => project.id).filter(Boolean))
+  const mergedProjects = liveProjects
+    .filter(isProjectEnabled)
+    .map((project) => {
+      const snapshotProject = snapshotById.get(project.id)
+
+      return {
+        ...snapshotProject,
+        ...project,
+        thumbnailUrl: project.thumbnailUrl || snapshotProject?.thumbnailUrl || '',
+      }
+    })
+
+  snapshotProjects.forEach((project) => {
+    if (project.id && !liveIds.has(project.id) && isProjectEnabled(project)) {
+      mergedProjects.push(project)
+    }
+  })
+
+  return mergedProjects
+}
+
 const getProjectThumbnailUrl = (project) => (
   project.thumbnailUrl || (
     project.id
@@ -86,25 +114,27 @@ function PortfolioPage() {
     }
 
     const fetchDashboardData = async () => {
-      let hasSnapshot = false
+      let snapshotProjects = []
 
       try {
-        const snapshotProjects = await fetchStaticProjectSummaries()
+        snapshotProjects = await fetchStaticProjectSummaries()
         setProjects(snapshotProjects.filter(isProjectEnabled))
         setIsLoading(false)
         setErrorMessage('')
-        hasSnapshot = true
-      } catch (error) {
-        console.warn('Failed to load static project snapshot:', error)
+      } catch (snapshotError) {
+        console.warn('Failed to load static project snapshot:', snapshotError)
       }
 
       try {
         const projectList = await fetchProjectSummaries()
-        setProjects(projectList.filter(isProjectEnabled))
+        setProjects((currentProjects) => {
+          const baseProjects = snapshotProjects.length > 0 ? snapshotProjects : currentProjects
+          return mergeProjects(baseProjects, projectList)
+        })
         setErrorMessage('')
       } catch (error) {
         console.error('Failed to connect to server:', error)
-        if (!hasSnapshot) {
+        if (snapshotProjects.length === 0) {
           setErrorMessage(error.message || '서버에 연결할 수 없습니다.')
         }
       } finally {

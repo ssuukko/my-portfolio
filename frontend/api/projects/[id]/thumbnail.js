@@ -18,14 +18,15 @@ export default async function handler(request, response) {
       headers: {
         Accept: 'image/*',
       },
+      cache: 'no-store',
     })
     const body = Buffer.from(await upstream.arrayBuffer())
 
     response.setHeader('Content-Type', upstream.headers.get('content-type') || 'application/octet-stream')
-    response.setHeader('Cache-Control', 's-maxage=86400, stale-while-revalidate=604800')
+    response.setHeader('Cache-Control', 'no-store, max-age=0')
     response.status(upstream.status).send(body)
   } catch (error) {
-    response.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=300')
+    response.setHeader('Cache-Control', 'no-store, max-age=0')
     response.status(502).send('Thumbnail origin is unavailable')
   }
 }

@@ -18,14 +18,15 @@ export default async function handler(request, response) {
       headers: {
         Accept: 'application/json',
       },
+      cache: 'no-store',
     })
     const body = await upstream.text()
 
     response.setHeader('Content-Type', upstream.headers.get('content-type') || 'application/json')
-    response.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=604800')
+    response.setHeader('Cache-Control', 'no-store, max-age=0')
     response.status(upstream.status).send(body)
   } catch (error) {
-    response.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=300')
+    response.setHeader('Cache-Control', 'no-store, max-age=0')
     response.status(502).json({
       success: false,
       message: '프로젝트 상세 원본 서버 응답이 지연되고 있습니다.',

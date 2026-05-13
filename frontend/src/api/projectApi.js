@@ -165,7 +165,7 @@ export const uploadProjectAttachment = async (id, file) => {
     method: 'POST',
     headers: getAdminHeaders(),
     body: formData,
-    timeout: 60000,
+    timeout: 120000,
   })
 
   return data.data
