@@ -24,10 +24,6 @@
             deploy_url,
             result,
             display_order,
-            attachment_filename,
-            attachment_content_type,
-            attachment_file_size,
-            attachment_data,
             created_at,
             updated_at
         )
@@ -49,10 +45,6 @@
             #{deployUrl},
             #{result},
             #{displayOrder},
-            #{attachmentFilename},
-            #{attachmentContentType},
-            #{attachmentFileSize},
-            #{attachmentData},
             #{createdAt},
             #{updatedAt}
         )
@@ -78,10 +70,6 @@
             deploy_url,
             result,
             display_order,
-            attachment_filename,
-            attachment_content_type,
-            attachment_file_size,
-            attachment_data,
             created_at,
             updated_at
         FROM projects
@@ -108,9 +96,6 @@
             deploy_url,
             result,
             display_order,
-            attachment_filename,
-            attachment_content_type,
-            attachment_file_size,
             created_at,
             updated_at
         FROM projects
@@ -130,9 +115,6 @@
             github_url,
             deploy_url,
             display_order,
-            attachment_filename,
-            attachment_content_type,
-            attachment_file_size,
             created_at,
             updated_at
         FROM projects
@@ -164,17 +146,6 @@
             deploy_url = #{deployUrl},
             result = #{result},
             display_order = #{displayOrder},
-            updated_at = #{updatedAt}
-        WHERE id = #{id}
-    </update>
-
-    <update id="updateAttachment" parameterType="Project">
-        UPDATE projects
-        SET
-            attachment_filename = #{attachmentFilename},
-            attachment_content_type = #{attachmentContentType},
-            attachment_file_size = #{attachmentFileSize},
-            attachment_data = #{attachmentData},
             updated_at = #{updatedAt}
         WHERE id = #{id}
     </update>
