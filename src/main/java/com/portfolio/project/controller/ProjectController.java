@@ -1,5 +1,8 @@
 package com.portfolio.project.controller;
 
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -11,10 +14,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.portfolio.common.ApiResponse;
 import com.portfolio.deploy.service.DeployHookService;
+import com.portfolio.project.domain.Project;
 import com.portfolio.project.dto.ProjectCreateRequest;
 import com.portfolio.project.dto.ProjectOrderUpdateRequest;
 import com.portfolio.project.dto.ProjectResponse;
@@ -88,6 +94,24 @@ public class ProjectController {
                 .body(imageBytes);
     }
 
+    @GetMapping("/projects/{id}/attachment")
+    public ResponseEntity<ByteArrayResource> downloadProjectAttachment(@PathVariable Long id) {
+        Project project = projectService.getProjectWithAttachment(id);
+        ByteArrayResource resource = new ByteArrayResource(project.getAttachmentData());
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(project.getAttachmentContentType()))
+                .contentLength(project.getAttachmentFileSize())
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment()
+                                .filename(project.getAttachmentFilename())
+                                .build()
+                                .toString()
+                )
+                .body(resource);
+    }
+
     @GetMapping("/projects/{id}")
     public ResponseEntity<ApiResponse<ProjectResponse>> getProject(@PathVariable Long id) {
         ProjectResponse project = projectService.getProject(id);
@@ -102,6 +126,30 @@ public class ProjectController {
         projectService.updateProject(id, request);
         deployHookService.triggerPortfolioDeploy();
         return ResponseEntity.ok(ApiResponse.success(null, "프로젝트가 수정되었습니다. 정적 포트폴리오 재배포를 요청했습니다."));
+    }
+
+    @PutMapping(value = "/projects/{id}/attachment", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<ProjectResponse>> uploadProjectAttachment(
+            @PathVariable Long id,
+            @RequestPart("file") MultipartFile file
+    ) {
+        ProjectResponse project = projectService.uploadAttachment(id, file);
+        return ResponseEntity.ok(ApiResponse.success(project, "프로젝트 첨부파일이 저장되었습니다. 정적 포트폴리오 재배포를 요청했습니다."));
+    }
+
+    @PostMapping(value = "/projects/{id}/attachment", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<ProjectResponse>> uploadProjectAttachmentByPost(
+            @PathVariable Long id,
+            @RequestPart("file") MultipartFile file
+    ) {
+        ProjectResponse project = projectService.uploadAttachment(id, file);
+        return ResponseEntity.ok(ApiResponse.success(project, "프로젝트 첨부파일이 저장되었습니다. 정적 포트폴리오 재배포를 요청했습니다."));
+    }
+
+    @DeleteMapping("/projects/{id}/attachment")
+    public ResponseEntity<ApiResponse<Void>> deleteProjectAttachment(@PathVariable Long id) {
+        projectService.deleteAttachment(id);
+        return ResponseEntity.ok(ApiResponse.success(null, "프로젝트 첨부파일이 삭제되었습니다. 정적 포트폴리오 재배포를 요청했습니다."));
     }
 
     @PutMapping("/projects/order")
