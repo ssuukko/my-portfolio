@@ -8,7 +8,7 @@ spring:
     driver-class-name: org.postgresql.Driver
   sql:
     init:
-      mode: always
+      mode: ${SPRING_SQL_INIT_MODE:never}
 
 mybatis:
   mapper-locations: classpath:mapper/**/*.xml
