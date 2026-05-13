@@ -17,6 +17,8 @@ public interface ProjectMapper {
 
     List<Project> findAll();
 
+    Optional<Project> findAttachmentById(Long id);
+
     List<Project> findSummaries();
 
     Integer findNextDisplayOrder();
@@ -27,6 +29,10 @@ public interface ProjectMapper {
             @Param("id") Long id,
             @Param("displayOrder") Integer displayOrder
     );
+
+    void updateAttachment(Project project);
+
+    void deleteAttachment(Long id);
 
     void deleteById(Long id);
 }

@@ -80,7 +80,7 @@ const ArrowRightIcon = () => (
   </svg>
 )
 
-function ProjectThumbnail({ alt, initial, index, src }) {
+function ProjectThumbnail({ alt, initial, src }) {
   const [retryCount, setRetryCount] = useState(0)
   const [status, setStatus] = useState(src ? 'loading' : 'empty')
 
@@ -108,9 +108,11 @@ function ProjectThumbnail({ alt, initial, index, src }) {
         className={`pf-card__img${status === 'loaded' ? ' is-loaded' : ''}`}
         src={retrySrc}
         alt={alt}
-        loading={index === 0 ? 'eager' : 'lazy'}
+        width="1280"
+        height="800"
+        loading="eager"
         decoding="async"
-        fetchPriority={index === 0 ? 'high' : 'auto'}
+        fetchPriority="high"
         onLoad={() => setStatus('loaded')}
         onError={() => {
           if (retryCount < 2) {
@@ -125,19 +127,18 @@ function ProjectThumbnail({ alt, initial, index, src }) {
   )
 }
 
-const ProjectCard = memo(function ProjectCard({ index, onOpen, project }) {
+const ProjectCard = memo(function ProjectCard({ onOpen, project }) {
   const thumbnailUrl = getProjectThumbnailUrl(project)
 
   return (
     <article
-      className="pf-card pd-reveal"
+      className="pf-card"
       key={project.id ?? project.title}
       onClick={onOpen}
     >
       <div className="pf-card__media">
         <ProjectThumbnail
           alt={`${project.title} 썸네일`}
-          index={index}
           initial={getProjectInitial(project.title)}
           key={thumbnailUrl || project.id || project.title}
           src={thumbnailUrl}
@@ -152,6 +153,11 @@ const ProjectCard = memo(function ProjectCard({ index, onOpen, project }) {
           <span className="pd-badge pd-badge--muted">
             {formatDate(project.startDate)} — {formatDate(project.endDate)}
           </span>
+          {(project.hasPortfolio || project.hasAttachment) && (
+            <span className="pd-badge pd-badge--attachment">
+              포트폴리오
+            </span>
+          )}
         </div>
 
         <h2 className="pf-card__title">{project.title}</h2>
@@ -192,32 +198,36 @@ function PortfolioPage() {
     }
 
     const fetchDashboardData = async () => {
-      let snapshotProjects = []
+      const [snapshotResult, liveResult] = await Promise.allSettled([
+        fetchStaticProjectSummaries(),
+        fetchProjectSummaries(),
+      ])
 
-      try {
-        snapshotProjects = await fetchStaticProjectSummaries()
-        setProjects(snapshotProjects.filter(isProjectEnabled))
-        setIsLoading(false)
-        setErrorMessage('')
-      } catch (error) {
-        console.warn('Failed to load static project snapshot:', error)
+      const snapshotProjects = snapshotResult.status === 'fulfilled'
+        ? snapshotResult.value.filter(isProjectEnabled)
+        : []
+
+      if (snapshotResult.status === 'rejected') {
+        console.warn('Failed to load static project snapshot:', snapshotResult.reason)
       }
 
-      try {
-        const projectList = await fetchProjectSummaries()
-        setProjects((currentProjects) => {
-          const baseProjects = snapshotProjects.length > 0 ? snapshotProjects : currentProjects
-          return mergeProjects(baseProjects, projectList)
-        })
+      if (liveResult.status === 'fulfilled') {
+        setProjects(mergeProjects(snapshotProjects, liveResult.value))
         setErrorMessage('')
-      } catch (error) {
-        console.error('Failed to connect to server:', error)
-        if (snapshotProjects.length === 0) {
-          setErrorMessage(error.message || '서버에 연결할 수 없습니다.')
-        }
-      } finally {
         setIsLoading(false)
+        return
       }
+
+      console.error('Failed to connect to server:', liveResult.reason)
+
+      if (snapshotProjects.length > 0) {
+        setProjects(snapshotProjects)
+        setErrorMessage('')
+      } else {
+        setErrorMessage(liveResult.reason?.message || '서버에 연결할 수 없습니다.')
+      }
+
+      setIsLoading(false)
     }
 
     fetchDashboardData()
@@ -269,9 +279,8 @@ function PortfolioPage() {
         {/* ── Project Grid ── */}
         {!isLoading && !errorMessage && projects.length > 0 && (
           <section className="pf-gallery" aria-label="프로젝트 목록">
-            {projects.map((project, index) => (
+            {projects.map((project) => (
               <ProjectCard
-                index={index}
                 key={project.id ?? project.title}
                 onOpen={() =>
                     navigate(

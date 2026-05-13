@@ -52,73 +52,105 @@
 
     <select id="findById" parameterType="long" resultType="Project">
         SELECT
-            id,
-            title,
-            summary,
-            description,
-            thumbnail_url,
-            feature_image_urls,
-            feature_image_captions,
-            project_url,
-            start_date,
-            end_date,
-            use_yn,
-            tech_stack,
-            my_role,
-            trouble_shooting,
-            github_url,
-            deploy_url,
-            result,
-            display_order,
-            created_at,
-            updated_at
-        FROM projects
-        WHERE id = #{id}
+            p.id,
+            p.title,
+            p.summary,
+            p.description,
+            p.thumbnail_url,
+            p.feature_image_urls,
+            p.feature_image_captions,
+            p.project_url,
+            p.start_date,
+            p.end_date,
+            p.use_yn,
+            p.tech_stack,
+            p.my_role,
+            p.trouble_shooting,
+            p.github_url,
+            p.deploy_url,
+            p.result,
+            pa.filename AS attachment_filename,
+            pa.content_type AS attachment_content_type,
+            pa.file_size AS attachment_file_size,
+            (pa.id IS NOT NULL) AS has_attachment,
+            (pa.id IS NOT NULL) AS has_portfolio,
+            p.display_order,
+            p.created_at,
+            p.updated_at
+        FROM projects p
+        LEFT JOIN project_attachments pa
+            ON pa.project_id = p.id
+        WHERE p.id = #{id}
     </select>
 
     <select id="findAll" resultType="Project">
         SELECT
-            id,
-            title,
-            summary,
-            description,
-            thumbnail_url,
-            feature_image_urls,
-            feature_image_captions,
-            project_url,
-            start_date,
-            end_date,
-            use_yn,
-            tech_stack,
-            my_role,
-            trouble_shooting,
-            github_url,
-            deploy_url,
-            result,
-            display_order,
-            created_at,
-            updated_at
-        FROM projects
-        ORDER BY display_order ASC, id DESC
+            p.id,
+            p.title,
+            p.summary,
+            p.description,
+            p.thumbnail_url,
+            p.feature_image_urls,
+            p.feature_image_captions,
+            p.project_url,
+            p.start_date,
+            p.end_date,
+            p.use_yn,
+            p.tech_stack,
+            p.my_role,
+            p.trouble_shooting,
+            p.github_url,
+            p.deploy_url,
+            p.result,
+            pa.filename AS attachment_filename,
+            pa.content_type AS attachment_content_type,
+            pa.file_size AS attachment_file_size,
+            (pa.id IS NOT NULL) AS has_attachment,
+            (pa.id IS NOT NULL) AS has_portfolio,
+            p.display_order,
+            p.created_at,
+            p.updated_at
+        FROM projects p
+        LEFT JOIN project_attachments pa
+            ON pa.project_id = p.id
+        ORDER BY p.display_order ASC, p.id DESC
+    </select>
+
+    <select id="findAttachmentById" parameterType="long" resultType="Project">
+        SELECT
+            p.id,
+            p.title,
+            pa.filename AS attachment_filename,
+            pa.content_type AS attachment_content_type,
+            pa.file_size AS attachment_file_size,
+            pa.data AS attachment_data
+        FROM projects p
+        JOIN project_attachments pa
+            ON pa.project_id = p.id
+        WHERE p.id = #{id}
     </select>
 
     <select id="findSummaries" resultType="Project">
         SELECT
-            id,
-            title,
-            summary,
-            thumbnail_url,
-            project_url,
-            start_date,
-            end_date,
-            use_yn,
-            github_url,
-            deploy_url,
-            display_order,
-            created_at,
-            updated_at
-        FROM projects
-        ORDER BY display_order ASC, id DESC
+            p.id,
+            p.title,
+            p.summary,
+            p.thumbnail_url,
+            p.project_url,
+            p.start_date,
+            p.end_date,
+            p.use_yn,
+            p.github_url,
+            p.deploy_url,
+            (pa.id IS NOT NULL) AS has_attachment,
+            (pa.id IS NOT NULL) AS has_portfolio,
+            p.display_order,
+            p.created_at,
+            p.updated_at
+        FROM projects p
+        LEFT JOIN project_attachments pa
+            ON pa.project_id = p.id
+        ORDER BY p.display_order ASC, p.id DESC
     </select>
 
     <select id="findNextDisplayOrder" resultType="int">
@@ -157,6 +189,39 @@
             updated_at = CURRENT_TIMESTAMP
         WHERE id = #{id}
     </update>
+
+    <update id="updateAttachment" parameterType="Project">
+        INSERT INTO project_attachments (
+            project_id,
+            filename,
+            content_type,
+            file_size,
+            data,
+            created_at,
+            updated_at
+        )
+        VALUES (
+            #{id},
+            #{attachmentFilename},
+            #{attachmentContentType},
+            #{attachmentFileSize},
+            #{attachmentData},
+            #{updatedAt},
+            #{updatedAt}
+        )
+        ON CONFLICT (project_id)
+        DO UPDATE SET
+            filename = EXCLUDED.filename,
+            content_type = EXCLUDED.content_type,
+            file_size = EXCLUDED.file_size,
+            data = EXCLUDED.data,
+            updated_at = EXCLUDED.updated_at
+    </update>
+
+    <delete id="deleteAttachment" parameterType="long">
+        DELETE FROM project_attachments
+        WHERE project_id = #{id}
+    </delete>
 
     <delete id="deleteById" parameterType="long">
         DELETE FROM projects

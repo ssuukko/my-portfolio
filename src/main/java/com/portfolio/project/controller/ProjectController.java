@@ -1,6 +1,8 @@
 package com.portfolio.project.controller;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -11,10 +13,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.portfolio.common.ApiResponse;
 import com.portfolio.deploy.service.DeployHookService;
+import com.portfolio.project.dto.ProjectAttachmentResponse;
 import com.portfolio.project.dto.ProjectCreateRequest;
 import com.portfolio.project.dto.ProjectOrderUpdateRequest;
 import com.portfolio.project.dto.ProjectResponse;
@@ -24,6 +29,7 @@ import jakarta.validation.Valid;
 
 import java.util.List;
 import java.util.Base64;
+import java.io.IOException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -92,6 +98,39 @@ public class ProjectController {
     public ResponseEntity<ApiResponse<ProjectResponse>> getProject(@PathVariable Long id) {
         ProjectResponse project = projectService.getProject(id);
         return ResponseEntity.ok(ApiResponse.success(project, "프로젝트 조회에 성공했습니다."));
+    }
+
+    @GetMapping("/projects/{id}/attachment")
+    public ResponseEntity<byte[]> getProjectAttachment(@PathVariable Long id) {
+        ProjectAttachmentResponse attachment = projectService.getProjectAttachment(id);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(attachment.contentType()))
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment()
+                                .filename(attachment.filename())
+                                .build()
+                                .toString()
+                )
+                .body(attachment.data());
+    }
+
+    @PostMapping(value = "/projects/{id}/attachment", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<ProjectResponse>> uploadProjectAttachment(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file
+    ) throws IOException {
+        ProjectResponse project = projectService.uploadProjectAttachment(id, file);
+        deployHookService.triggerPortfolioDeploy();
+        return ResponseEntity.ok(ApiResponse.success(project, "첨부파일이 업로드되었습니다."));
+    }
+
+    @DeleteMapping("/projects/{id}/attachment")
+    public ResponseEntity<ApiResponse<Void>> deleteProjectAttachment(@PathVariable Long id) {
+        projectService.deleteProjectAttachment(id);
+        deployHookService.triggerPortfolioDeploy();
+        return ResponseEntity.ok(ApiResponse.success(null, "첨부파일이 삭제되었습니다."));
     }
 
     @PutMapping("/projects/{id}")
