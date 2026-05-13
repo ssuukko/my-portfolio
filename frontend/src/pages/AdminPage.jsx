@@ -102,15 +102,16 @@ const markAdminSession = () => {
 
 function AdminPage() {
   const navigate = useNavigate()
-  const [isAuthenticated, setIsAuthenticated] = useState(() => Boolean(getAdminAuth()))
+  const hasInitialAuth = Boolean(getAdminAuth())
+  const [isAuthenticated, setIsAuthenticated] = useState(hasInitialAuth)
   const [adminUsernameInput, setAdminUsernameInput] = useState('')
   const [adminPasswordInput, setAdminPasswordInput] = useState('')
   const [loginErrorMessage, setLoginErrorMessage] = useState('')
   const [projects, setProjects] = useState([])
   const [visits, setVisits] = useState([])
   const [activeTab, setActiveTab] = useState('projects')
-  const [isLoading, setIsLoading] = useState(true)
-  const [isVisitsLoading, setIsVisitsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(hasInitialAuth)
+  const [isVisitsLoading, setIsVisitsLoading] = useState(hasInitialAuth)
   const [errorMessage, setErrorMessage] = useState('')
   const [visitErrorMessage, setVisitErrorMessage] = useState('')
   const [selectedProject, setSelectedProject] = useState(null)
@@ -178,8 +179,6 @@ function AdminPage() {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      setIsLoading(false)
-      setIsVisitsLoading(false)
       return
     }
 

@@ -1,3 +1,5 @@
+/* global Buffer, process */
+
 const RENDER_API_URL = (
   process.env.RENDER_API_URL ||
   process.env.VITE_API_URL ||
@@ -24,7 +26,7 @@ export default async function handler(request, response) {
     response.setHeader('Content-Type', upstream.headers.get('content-type') || 'application/octet-stream')
     response.setHeader('Cache-Control', 's-maxage=86400, stale-while-revalidate=604800')
     response.status(upstream.status).send(body)
-  } catch (error) {
+  } catch {
     response.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=300')
     response.status(502).send('Thumbnail origin is unavailable')
   }

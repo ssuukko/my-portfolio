@@ -22,6 +22,22 @@ const getAdminHeaders = () => ({
   Authorization: `Basic ${getAdminAuth()}`,
 })
 
+const toProjectSummary = (project) => ({
+  id: project.id,
+  title: project.title,
+  summary: project.summary,
+  thumbnailUrl: project.thumbnailUrl,
+  projectUrl: project.projectUrl,
+  startDate: project.startDate,
+  endDate: project.endDate,
+  useYn: project.useYn,
+  githubUrl: project.githubUrl,
+  deployUrl: project.deployUrl,
+  displayOrder: project.displayOrder,
+  createdAt: project.createdAt,
+  updatedAt: project.updatedAt,
+})
+
 const parseResponse = async (response) => {
   const contentType = response.headers.get('content-type') ?? ''
 
@@ -58,7 +74,9 @@ const request = async (path, options = {}) => {
     data = await parseResponse(response)
   } catch (error) {
     if (error.name === 'AbortError') {
-      throw new Error('API 서버 응답이 지연되고 있습니다. 잠시 후 다시 시도해 주세요.')
+      throw new Error('API 서버 응답이 지연되고 있습니다. 잠시 후 다시 시도해 주세요.', {
+        cause: error,
+      })
     }
 
     throw error
@@ -86,7 +104,7 @@ export const fetchProjects = async () => {
 
 export const fetchProjectSummaries = async () => {
   const data = await request('/api/projects/summary', { baseUrl: cachedBaseURL })
-  return data.data ?? []
+  return (data.data ?? []).map(toProjectSummary)
 }
 
 export const fetchStaticProjectSummaries = async () => {
@@ -99,7 +117,7 @@ export const fetchStaticProjectSummaries = async () => {
   }
 
   const data = await response.json()
-  return data.data ?? []
+  return (data.data ?? []).map(toProjectSummary)
 }
 
 export const fetchHealth = async () => {
