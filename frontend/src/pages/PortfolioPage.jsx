@@ -71,15 +71,6 @@ const showProjectPlaceholder = (event) => {
   }
 }
 
-const showProjectImage = (event) => {
-  event.currentTarget.hidden = false
-  const placeholder = event.currentTarget.nextElementSibling
-
-  if (placeholder) {
-    placeholder.hidden = true
-  }
-}
-
 const isAdminVisit = () => {
   const searchParams = new URLSearchParams(window.location.search)
   const refParam = searchParams.get('ref')?.trim() ?? ''
@@ -200,68 +191,62 @@ function PortfolioPage() {
         {/* ── Project Grid ── */}
         {!isLoading && !errorMessage && projects.length > 0 && (
           <section className="pf-gallery" aria-label="프로젝트 목록">
-            {projects.map((project, index) => {
-              const thumbnailUrl = getProjectThumbnailUrl(project)
-
-              return (
-                <article
-                  className="pf-card pd-reveal"
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                  key={project.id ?? project.title}
-                  onClick={() =>
-                    navigate(
-                      `/projects/${project.id}${
-                        isAdminSession ? '?ref=admin' : ''
-                      }`,
-                    )
-                  }
-                >
-                  <div className="pf-card__media">
-                    {thumbnailUrl ? (
-                      <>
-                        <img
-                          className="pf-card__img"
-                          key={thumbnailUrl}
-                          src={thumbnailUrl}
-                          alt={`${project.title} 썸네일`}
-                          loading={index === 0 ? 'eager' : 'lazy'}
-                          decoding="async"
-                          onLoad={showProjectImage}
-                          onError={showProjectPlaceholder}
-                        />
-                        <div className="pd-hero__placeholder" hidden>
-                          <span>{getProjectInitial(project.title)}</span>
-                        </div>
-                      </>
-                    ) : (
-                      <div className="pd-hero__placeholder">
+            {projects.map((project, index) => (
+              <article
+                className="pf-card pd-reveal"
+                style={{ animationDelay: `${index * 0.1}s` }}
+                key={project.id ?? project.title}
+                onClick={() =>
+                  navigate(
+                    `/projects/${project.id}${
+                      isAdminSession ? '?ref=admin' : ''
+                    }`,
+                  )
+                }
+              >
+                <div className="pf-card__media">
+                  {getProjectThumbnailUrl(project) ? (
+                    <>
+                      <img
+                        className="pf-card__img"
+                        src={getProjectThumbnailUrl(project)}
+                        alt={`${project.title} 썸네일`}
+                        loading={index === 0 ? 'eager' : 'lazy'}
+                        decoding="async"
+                        onError={showProjectPlaceholder}
+                      />
+                      <div className="pd-hero__placeholder" hidden>
                         <span>{getProjectInitial(project.title)}</span>
                       </div>
-                    )}
-                    <div className="pf-card__overlay">
-                      <span className="pf-card__view-btn">View Case Study</span>
+                    </>
+                  ) : (
+                    <div className="pd-hero__placeholder">
+                      <span>{getProjectInitial(project.title)}</span>
                     </div>
+                  )}
+                  <div className="pf-card__overlay">
+                    <span className="pf-card__view-btn">View Case Study</span>
                   </div>
-
-                  <div className="pf-card__content">
-                    <div className="pf-card__meta">
-                      <span className="pd-badge pd-badge--muted">
-                        {formatDate(project.startDate)} — {formatDate(project.endDate)}
-                      </span>
-                    </div>
-
-                    <h2 className="pf-card__title">{project.title}</h2>
-                    <p className="pf-card__summary">{project.summary || '프로젝트 상세 내용을 확인해 보세요.'}</p>
-
-                    <div className="pf-card__footer">
-                      <span className="pf-link-text">
-                        자세히 보기 <ArrowRightIcon />
-                      </span>
-                    </div>
+                </div>
+                
+                <div className="pf-card__content">
+                  <div className="pf-card__meta">
+                    <span className="pd-badge pd-badge--muted">
+                      {formatDate(project.startDate)} — {formatDate(project.endDate)}
+                    </span>
                   </div>
-                </article>
-              )
-            })}
+                  
+                  <h2 className="pf-card__title">{project.title}</h2>
+                  <p className="pf-card__summary">{project.summary || '프로젝트 상세 내용을 확인해 보세요.'}</p>
+                  
+                  <div className="pf-card__footer">
+                    <span className="pf-link-text">
+                      자세히 보기 <ArrowRightIcon />
+                    </span>
+                  </div>
+                </div>
+              </article>
+            ))}
           </section>
         )}
       </main>
