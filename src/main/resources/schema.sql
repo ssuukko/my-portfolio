@@ -17,6 +17,10 @@ CREATE TABLE IF NOT EXISTS projects (
     deploy_url        VARCHAR(500),
     result            TEXT,
     display_order     INTEGER NOT NULL DEFAULT 0,
+    attachment_filename VARCHAR(500),
+    attachment_content_type VARCHAR(255),
+    attachment_file_size BIGINT,
+    attachment_data   BYTEA,
     created_at        TIMESTAMP,
     updated_at        TIMESTAMP
 );
@@ -32,7 +36,11 @@ ALTER TABLE projects
     ADD COLUMN IF NOT EXISTS github_url VARCHAR(500),
     ADD COLUMN IF NOT EXISTS deploy_url VARCHAR(500),
     ADD COLUMN IF NOT EXISTS result TEXT,
-    ADD COLUMN IF NOT EXISTS display_order INTEGER NOT NULL DEFAULT 0;
+    ADD COLUMN IF NOT EXISTS display_order INTEGER NOT NULL DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS attachment_filename VARCHAR(500),
+    ADD COLUMN IF NOT EXISTS attachment_content_type VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS attachment_file_size BIGINT,
+    ADD COLUMN IF NOT EXISTS attachment_data BYTEA;
 
 ALTER TABLE projects
     ALTER COLUMN thumbnail_url TYPE TEXT;

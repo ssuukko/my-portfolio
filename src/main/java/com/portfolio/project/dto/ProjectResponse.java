@@ -24,6 +24,9 @@ public record ProjectResponse(
         String deployUrl,
         String result,
         Integer displayOrder,
+        String attachmentFilename,
+        String attachmentContentType,
+        Long attachmentFileSize,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
@@ -48,6 +51,9 @@ public record ProjectResponse(
                 project.getDeployUrl(),
                 project.getResult(),
                 project.getDisplayOrder(),
+                project.getAttachmentFilename(),
+                project.getAttachmentContentType(),
+                project.getAttachmentFileSize(),
                 project.getCreatedAt(),
                 project.getUpdatedAt()
         );
@@ -75,6 +81,9 @@ public record ProjectResponse(
                 project.getDeployUrl(),
                 null,
                 project.getDisplayOrder(),
+                project.getAttachmentFilename(),
+                project.getAttachmentContentType(),
+                project.getAttachmentFileSize(),
                 project.getCreatedAt(),
                 project.getUpdatedAt()
         );

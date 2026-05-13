@@ -78,6 +78,10 @@ public class AdminAuthInterceptor implements HandlerInterceptor {
             return false;
         }
 
+        if (method.equals("GET") && path.matches("^/api/projects/\\d+/attachment$")) {
+            return false;
+        }
+
         if (method.equals("POST") && path.equals("/api/visits")) {
             return false;
         }

@@ -4,11 +4,14 @@ import ProjectFormModal from '../components/ProjectFormModal'
 import {
   createProject,
   clearAdminAuth,
+  deleteProjectAttachment,
   deleteProject,
   fetchProjects,
   fetchVisits,
   getAdminAuth,
+  isAdminAuthError,
   setAdminCredentials,
+  uploadProjectAttachment,
   updateProjectOrder,
   updateProject,
 } from '../api/projectApi'
@@ -46,6 +49,15 @@ const formatDateTime = (date) => {
     minute: '2-digit',
     second: '2-digit',
   }).format(new Date(date))
+}
+
+const formatFileSize = (bytes) => {
+  if (!bytes) {
+    return '-'
+  }
+
+  const megabytes = bytes / 1024 / 1024
+  return `${megabytes.toFixed(megabytes >= 10 ? 0 : 1)}MB`
 }
 
 const formatReferrer = (referrer) => {
@@ -111,6 +123,7 @@ function AdminPage() {
   const [activeTab, setActiveTab] = useState('projects')
   const [isLoading, setIsLoading] = useState(true)
   const [isVisitsLoading, setIsVisitsLoading] = useState(true)
+  const [uploadingAttachmentProjectId, setUploadingAttachmentProjectId] = useState(null)
   const [errorMessage, setErrorMessage] = useState('')
   const [visitErrorMessage, setVisitErrorMessage] = useState('')
   const [selectedProject, setSelectedProject] = useState(null)
@@ -186,24 +199,41 @@ function AdminPage() {
     markAdminSession()
 
     const loadInitialData = async () => {
-      try {
-        const [projectList, visitList] = await Promise.all([
-          fetchProjects(),
-          fetchVisits(),
-        ])
-        setProjects(projectList)
-        setVisits(visitList)
-      } catch (error) {
-        console.error('Failed to load admin data:', error)
-        setErrorMessage(error.message || '관리자 데이터를 불러오지 못했습니다.')
-        setVisitErrorMessage(error.message || '관리자 데이터를 불러오지 못했습니다.')
+      const [projectResult, visitResult] = await Promise.allSettled([
+        fetchProjects(),
+        fetchVisits(),
+      ])
+
+      if (
+        (projectResult.status === 'rejected' && isAdminAuthError(projectResult.reason)) ||
+        (visitResult.status === 'rejected' && isAdminAuthError(visitResult.reason))
+      ) {
         clearAdminAuth()
         setIsAuthenticated(false)
         setLoginErrorMessage('관리자 인증에 실패했습니다.')
-      } finally {
         setIsLoading(false)
         setIsVisitsLoading(false)
+        return
       }
+
+      if (projectResult.status === 'fulfilled') {
+        setProjects(projectResult.value)
+        setErrorMessage('')
+      } else {
+        console.error('Failed to load projects:', projectResult.reason)
+        setErrorMessage(projectResult.reason.message || '프로젝트 목록을 불러오지 못했습니다.')
+      }
+
+      if (visitResult.status === 'fulfilled') {
+        setVisits(visitResult.value)
+        setVisitErrorMessage('')
+      } else {
+        console.error('Failed to load visits:', visitResult.reason)
+        setVisitErrorMessage(visitResult.reason.message || '방문 로그를 불러오지 못했습니다.')
+      }
+
+      setIsLoading(false)
+      setIsVisitsLoading(false)
     }
 
     loadInitialData()
@@ -323,6 +353,56 @@ function AdminPage() {
     loadVisits(true)
   }
 
+  const handleProjectAttachmentChange = async (projectId, event) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+
+    if (!file) {
+      return
+    }
+
+    const allowedExtensions = ['.ppt', '.pptx', '.pdf']
+    const lowerFilename = file.name.toLowerCase()
+    const isAllowedFile = allowedExtensions.some((extension) =>
+      lowerFilename.endsWith(extension),
+    )
+
+    if (!isAllowedFile) {
+      alert('PPT, PPTX, PDF 파일만 업로드할 수 있습니다.')
+      return
+    }
+
+    if (file.size > 20 * 1024 * 1024) {
+      alert('첨부파일은 20MB 이하만 업로드할 수 있습니다.')
+      return
+    }
+
+    try {
+      setUploadingAttachmentProjectId(projectId)
+      await uploadProjectAttachment(projectId, file)
+      await loadProjects(false)
+    } catch (error) {
+      console.error('Failed to upload project attachment:', error)
+      alert(error.message || '첨부파일 업로드에 실패했습니다.')
+    } finally {
+      setUploadingAttachmentProjectId(null)
+    }
+  }
+
+  const handleDeleteProjectAttachment = async (projectId) => {
+    if (!window.confirm('등록된 첨부파일을 삭제하시겠습니까?')) {
+      return
+    }
+
+    try {
+      await deleteProjectAttachment(projectId)
+      await loadProjects(false)
+    } catch (error) {
+      console.error('Failed to delete project attachment:', error)
+      alert(error.message || '첨부파일 삭제에 실패했습니다.')
+    }
+  }
+
   if (!isAuthenticated) {
     return (
       <div className="dashboard admin-dashboard">
@@ -400,13 +480,13 @@ function AdminPage() {
           <div>
             <p className="eyebrow">Records</p>
             <h2 id="admin-heading">
-              {activeTab === 'projects' ? '프로젝트 목록' : '방문 로그'}
+              {activeTab === 'projects' && '프로젝트 목록'}
+              {activeTab === 'visits' && '방문 로그'}
             </h2>
           </div>
           <span className="project-count">
-            {activeTab === 'projects'
-              ? `${projects.length}개`
-              : `${visitGroups.length}개 IP / ${visits.length}회`}
+            {activeTab === 'projects' && `${projects.length}개`}
+            {activeTab === 'visits' && `${visitGroups.length}개 IP / ${visits.length}회`}
           </span>
           {activeTab === 'visits' && (
             <button
@@ -460,6 +540,7 @@ function AdminPage() {
                   <th>요약</th>
                   <th>시작일</th>
                   <th>종료일</th>
+                  <th>첨부파일</th>
                   <th>사용여부</th>
                   <th>순서</th>
                   <th>수정</th>
@@ -469,7 +550,7 @@ function AdminPage() {
               <tbody>
                 {projects.length === 0 && (
                   <tr>
-                    <td className="table-empty" colSpan="9">
+                    <td className="table-empty" colSpan="10">
                       등록된 프로젝트가 없습니다.
                     </td>
                   </tr>
@@ -481,6 +562,38 @@ function AdminPage() {
                     <td>{truncateSummary(project.summary)}</td>
                     <td>{formatDate(project.startDate)}</td>
                     <td>{formatDate(project.endDate)}</td>
+                    <td>
+                      <div className="attachment-cell">
+                        {project.attachmentFilename ? (
+                          <>
+                            <span title={project.attachmentFilename}>
+                              {project.attachmentFilename}
+                            </span>
+                            <small>{formatFileSize(project.attachmentFileSize)}</small>
+                            <button
+                              className="danger-button"
+                              type="button"
+                              onClick={() => handleDeleteProjectAttachment(project.id)}
+                            >
+                              삭제
+                            </button>
+                          </>
+                        ) : (
+                          <span className="attachment-empty">없음</span>
+                        )}
+                        <label className="table-button attachment-upload">
+                          {uploadingAttachmentProjectId === project.id ? '업로드 중' : '업로드'}
+                          <input
+                            type="file"
+                            accept=".ppt,.pptx,.pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/pdf"
+                            disabled={uploadingAttachmentProjectId === project.id}
+                            onChange={(event) =>
+                              handleProjectAttachmentChange(project.id, event)
+                            }
+                          />
+                        </label>
+                      </div>
+                    </td>
                     <td>
                       <button
                         className={

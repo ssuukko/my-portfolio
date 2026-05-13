@@ -23,6 +23,8 @@ public interface ProjectMapper {
 
     void update(Project project);
 
+    void updateAttachment(Project project);
+
     void updateDisplayOrder(
             @Param("id") Long id,
             @Param("displayOrder") Integer displayOrder
