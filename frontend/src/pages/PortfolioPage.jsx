@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   buildApiUrl,
@@ -23,6 +23,34 @@ const isProjectEnabled = (project) => project.useYn !== 'N'
 
 const getProjectInitial = (title) => title?.trim()?.slice(0, 1) || 'P'
 
+const mergeProjects = (snapshotProjects, liveProjects) => {
+  const snapshotById = new Map(
+    snapshotProjects
+      .filter((project) => project.id)
+      .map((project) => [project.id, project]),
+  )
+  const liveIds = new Set(liveProjects.map((project) => project.id).filter(Boolean))
+  const mergedProjects = liveProjects
+    .filter(isProjectEnabled)
+    .map((project) => {
+      const snapshotProject = snapshotById.get(project.id)
+
+      return {
+        ...snapshotProject,
+        ...project,
+        thumbnailUrl: project.thumbnailUrl || snapshotProject?.thumbnailUrl || '',
+      }
+    })
+
+  snapshotProjects.forEach((project) => {
+    if (project.id && !liveIds.has(project.id) && isProjectEnabled(project)) {
+      mergedProjects.push(project)
+    }
+  })
+
+  return mergedProjects
+}
+
 const getProjectThumbnailUrl = (project) => (
   project.thumbnailUrl || (
     project.id
@@ -33,15 +61,6 @@ const getProjectThumbnailUrl = (project) => (
       : ''
   )
 )
-
-const showProjectPlaceholder = (event) => {
-  event.currentTarget.hidden = true
-  const placeholder = event.currentTarget.nextElementSibling
-
-  if (placeholder) {
-    placeholder.hidden = false
-  }
-}
 
 const isAdminVisit = () => {
   const searchParams = new URLSearchParams(window.location.search)
@@ -60,6 +79,51 @@ const ArrowRightIcon = () => (
     <polyline points="12 5 19 12 12 19" />
   </svg>
 )
+
+function ProjectThumbnail({ alt, initial, index, src }) {
+  const [retryCount, setRetryCount] = useState(0)
+  const [status, setStatus] = useState(src ? 'loading' : 'empty')
+
+  const retrySrc = useMemo(() => {
+    if (!src || retryCount === 0) {
+      return src
+    }
+
+    const separator = src.includes('?') ? '&' : '?'
+    return `${src}${separator}retry=${retryCount}`
+  }, [retryCount, src])
+
+  if (!src || status === 'error') {
+    return (
+      <div className="pd-hero__placeholder">
+        <span>{initial}</span>
+      </div>
+    )
+  }
+
+  return (
+    <>
+      {status === 'loading' && <div className="pf-card__skeleton" aria-hidden="true" />}
+      <img
+        className={`pf-card__img${status === 'loaded' ? ' is-loaded' : ''}`}
+        src={retrySrc}
+        alt={alt}
+        loading={index === 0 ? 'eager' : 'lazy'}
+        decoding="async"
+        fetchPriority={index === 0 ? 'high' : 'auto'}
+        onLoad={() => setStatus('loaded')}
+        onError={() => {
+          if (retryCount < 2) {
+            window.setTimeout(() => setRetryCount((count) => count + 1), 350 * (retryCount + 1))
+            return
+          }
+
+          setStatus('error')
+        }}
+      />
+    </>
+  )
+}
 
 function PortfolioPage() {
   const navigate = useNavigate()
@@ -86,25 +150,27 @@ function PortfolioPage() {
     }
 
     const fetchDashboardData = async () => {
-      let hasSnapshot = false
+      let snapshotProjects = []
 
       try {
-        const snapshotProjects = await fetchStaticProjectSummaries()
+        snapshotProjects = await fetchStaticProjectSummaries()
         setProjects(snapshotProjects.filter(isProjectEnabled))
         setIsLoading(false)
         setErrorMessage('')
-        hasSnapshot = true
       } catch (error) {
         console.warn('Failed to load static project snapshot:', error)
       }
 
       try {
         const projectList = await fetchProjectSummaries()
-        setProjects(projectList.filter(isProjectEnabled))
+        setProjects((currentProjects) => {
+          const baseProjects = snapshotProjects.length > 0 ? snapshotProjects : currentProjects
+          return mergeProjects(baseProjects, projectList)
+        })
         setErrorMessage('')
       } catch (error) {
         console.error('Failed to connect to server:', error)
-        if (!hasSnapshot) {
+        if (snapshotProjects.length === 0) {
           setErrorMessage(error.message || '서버에 연결할 수 없습니다.')
         }
       } finally {
@@ -161,62 +227,54 @@ function PortfolioPage() {
         {/* ── Project Grid ── */}
         {!isLoading && !errorMessage && projects.length > 0 && (
           <section className="pf-gallery" aria-label="프로젝트 목록">
-            {projects.map((project, index) => (
-              <article
-                className="pf-card pd-reveal"
-                style={{ animationDelay: `${index * 0.1}s` }}
-                key={project.id ?? project.title}
-                onClick={() =>
-                  navigate(
-                    `/projects/${project.id}${
-                      isAdminSession ? '?ref=admin' : ''
-                    }`,
-                  )
-                }
-              >
-                <div className="pf-card__media">
-                  {getProjectThumbnailUrl(project) ? (
-                    <>
-                      <img
-                        className="pf-card__img"
-                        src={getProjectThumbnailUrl(project)}
-                        alt={`${project.title} 썸네일`}
-                        loading={index === 0 ? 'eager' : 'lazy'}
-                        decoding="async"
-                        onError={showProjectPlaceholder}
-                      />
-                      <div className="pd-hero__placeholder" hidden>
-                        <span>{getProjectInitial(project.title)}</span>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="pd-hero__placeholder">
-                      <span>{getProjectInitial(project.title)}</span>
+            {projects.map((project, index) => {
+              const thumbnailUrl = getProjectThumbnailUrl(project)
+
+              return (
+                <article
+                  className="pf-card pd-reveal"
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                  key={project.id ?? project.title}
+                  onClick={() =>
+                    navigate(
+                      `/projects/${project.id}${
+                        isAdminSession ? '?ref=admin' : ''
+                      }`,
+                    )
+                  }
+                >
+                  <div className="pf-card__media">
+                    <ProjectThumbnail
+                      alt={`${project.title} 썸네일`}
+                      index={index}
+                      initial={getProjectInitial(project.title)}
+                      key={thumbnailUrl || project.id || project.title}
+                      src={thumbnailUrl}
+                    />
+                    <div className="pf-card__overlay">
+                      <span className="pf-card__view-btn">View Case Study</span>
                     </div>
-                  )}
-                  <div className="pf-card__overlay">
-                    <span className="pf-card__view-btn">View Case Study</span>
                   </div>
-                </div>
-                
-                <div className="pf-card__content">
-                  <div className="pf-card__meta">
-                    <span className="pd-badge pd-badge--muted">
-                      {formatDate(project.startDate)} — {formatDate(project.endDate)}
-                    </span>
+
+                  <div className="pf-card__content">
+                    <div className="pf-card__meta">
+                      <span className="pd-badge pd-badge--muted">
+                        {formatDate(project.startDate)} — {formatDate(project.endDate)}
+                      </span>
+                    </div>
+
+                    <h2 className="pf-card__title">{project.title}</h2>
+                    <p className="pf-card__summary">{project.summary || '프로젝트 상세 내용을 확인해 보세요.'}</p>
+
+                    <div className="pf-card__footer">
+                      <span className="pf-link-text">
+                        자세히 보기 <ArrowRightIcon />
+                      </span>
+                    </div>
                   </div>
-                  
-                  <h2 className="pf-card__title">{project.title}</h2>
-                  <p className="pf-card__summary">{project.summary || '프로젝트 상세 내용을 확인해 보세요.'}</p>
-                  
-                  <div className="pf-card__footer">
-                    <span className="pf-link-text">
-                      자세히 보기 <ArrowRightIcon />
-                    </span>
-                  </div>
-                </div>
-              </article>
-            ))}
+                </article>
+              )
+            })}
           </section>
         )}
       </main>
