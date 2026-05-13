@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { memo, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   buildApiUrl,
@@ -125,6 +125,48 @@ function ProjectThumbnail({ alt, initial, index, src }) {
   )
 }
 
+const ProjectCard = memo(function ProjectCard({ index, onOpen, project }) {
+  const thumbnailUrl = getProjectThumbnailUrl(project)
+
+  return (
+    <article
+      className="pf-card pd-reveal"
+      key={project.id ?? project.title}
+      onClick={onOpen}
+    >
+      <div className="pf-card__media">
+        <ProjectThumbnail
+          alt={`${project.title} 썸네일`}
+          index={index}
+          initial={getProjectInitial(project.title)}
+          key={thumbnailUrl || project.id || project.title}
+          src={thumbnailUrl}
+        />
+        <div className="pf-card__overlay">
+          <span className="pf-card__view-btn">View Case Study</span>
+        </div>
+      </div>
+
+      <div className="pf-card__content">
+        <div className="pf-card__meta">
+          <span className="pd-badge pd-badge--muted">
+            {formatDate(project.startDate)} — {formatDate(project.endDate)}
+          </span>
+        </div>
+
+        <h2 className="pf-card__title">{project.title}</h2>
+        <p className="pf-card__summary">{project.summary || '프로젝트 상세 내용을 확인해 보세요.'}</p>
+
+        <div className="pf-card__footer">
+          <span className="pf-link-text">
+            자세히 보기 <ArrowRightIcon />
+          </span>
+        </div>
+      </div>
+    </article>
+  )
+})
+
 function PortfolioPage() {
   const navigate = useNavigate()
   const [projects, setProjects] = useState([])
@@ -227,54 +269,20 @@ function PortfolioPage() {
         {/* ── Project Grid ── */}
         {!isLoading && !errorMessage && projects.length > 0 && (
           <section className="pf-gallery" aria-label="프로젝트 목록">
-            {projects.map((project, index) => {
-              const thumbnailUrl = getProjectThumbnailUrl(project)
-
-              return (
-                <article
-                  className="pf-card pd-reveal"
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                  key={project.id ?? project.title}
-                  onClick={() =>
+            {projects.map((project, index) => (
+              <ProjectCard
+                index={index}
+                key={project.id ?? project.title}
+                onOpen={() =>
                     navigate(
                       `/projects/${project.id}${
                         isAdminSession ? '?ref=admin' : ''
                       }`,
                     )
                   }
-                >
-                  <div className="pf-card__media">
-                    <ProjectThumbnail
-                      alt={`${project.title} 썸네일`}
-                      index={index}
-                      initial={getProjectInitial(project.title)}
-                      key={thumbnailUrl || project.id || project.title}
-                      src={thumbnailUrl}
-                    />
-                    <div className="pf-card__overlay">
-                      <span className="pf-card__view-btn">View Case Study</span>
-                    </div>
-                  </div>
-
-                  <div className="pf-card__content">
-                    <div className="pf-card__meta">
-                      <span className="pd-badge pd-badge--muted">
-                        {formatDate(project.startDate)} — {formatDate(project.endDate)}
-                      </span>
-                    </div>
-
-                    <h2 className="pf-card__title">{project.title}</h2>
-                    <p className="pf-card__summary">{project.summary || '프로젝트 상세 내용을 확인해 보세요.'}</p>
-
-                    <div className="pf-card__footer">
-                      <span className="pf-link-text">
-                        자세히 보기 <ArrowRightIcon />
-                      </span>
-                    </div>
-                  </div>
-                </article>
-              )
-            })}
+                project={project}
+              />
+            ))}
           </section>
         )}
       </main>
