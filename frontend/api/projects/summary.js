@@ -17,6 +17,8 @@ const toCardSummary = (project) => ({
   useYn: project.useYn,
   githubUrl: project.githubUrl,
   deployUrl: project.deployUrl,
+  hasAttachment: Boolean(project.hasAttachment || project.hasPortfolio || project.attachmentFilename),
+  hasPortfolio: Boolean(project.hasPortfolio || project.hasAttachment || project.attachmentFilename),
   displayOrder: project.displayOrder,
   createdAt: project.createdAt,
   updatedAt: project.updatedAt,

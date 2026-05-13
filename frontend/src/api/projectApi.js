@@ -1,6 +1,7 @@
-const baseURL = (
-  import.meta.env.VITE_API_URL || 'https://my-portfolio-yol2.onrender.com'
-).replace(/\/$/, '')
+const defaultBaseURL = import.meta.env.DEV
+  ? 'http://localhost:8080'
+  : 'https://my-portfolio-yol2.onrender.com'
+const baseURL = (import.meta.env.VITE_API_URL || defaultBaseURL).replace(/\/$/, '')
 const cachedBaseURL = import.meta.env.PROD ? '' : baseURL
 const DEFAULT_TIMEOUT_MS = 12000
 const ADMIN_AUTH_STORAGE_KEY = 'portfolioAdminAuth'
@@ -33,6 +34,8 @@ const toProjectSummary = (project) => ({
   useYn: project.useYn,
   githubUrl: project.githubUrl,
   deployUrl: project.deployUrl,
+  hasAttachment: Boolean(project.hasAttachment || project.hasPortfolio || project.attachmentFilename),
+  hasPortfolio: Boolean(project.hasPortfolio || project.hasAttachment || project.attachmentFilename),
   displayOrder: project.displayOrder,
   createdAt: project.createdAt,
   updatedAt: project.updatedAt,

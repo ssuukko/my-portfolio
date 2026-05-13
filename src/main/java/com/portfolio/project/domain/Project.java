@@ -28,6 +28,12 @@ public class Project {
     private String githubUrl;
     private String deployUrl;
     private String result;
+    private String attachmentFilename;
+    private String attachmentContentType;
+    private Long attachmentFileSize;
+    private byte[] attachmentData;
+    private Boolean hasAttachment;
+    private Boolean hasPortfolio;
     private Integer displayOrder;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -159,6 +165,27 @@ public class Project {
 
     public void updateDisplayOrder(Integer displayOrder) {
         this.displayOrder = normalizeDisplayOrder(displayOrder);
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void updateAttachment(
+            String attachmentFilename,
+            String attachmentContentType,
+            Long attachmentFileSize,
+            byte[] attachmentData
+    ) {
+        this.attachmentFilename = attachmentFilename;
+        this.attachmentContentType = attachmentContentType;
+        this.attachmentFileSize = attachmentFileSize;
+        this.attachmentData = attachmentData;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void deleteAttachment() {
+        this.attachmentFilename = null;
+        this.attachmentContentType = null;
+        this.attachmentFileSize = null;
+        this.attachmentData = null;
         this.updatedAt = LocalDateTime.now();
     }
 
