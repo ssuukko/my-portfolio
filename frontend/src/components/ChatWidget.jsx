@@ -310,12 +310,46 @@ function ChatWidget() {
 
         @media (max-width: 640px) {
           .chat-widget {
-            right: 16px;
-            bottom: 16px;
+            right: max(14px, env(safe-area-inset-right));
+            bottom: max(14px, env(safe-area-inset-bottom));
           }
 
           .chat-panel {
-            bottom: 70px;
+            position: fixed;
+            left: 12px;
+            right: 12px;
+            bottom: calc(78px + env(safe-area-inset-bottom));
+            width: auto;
+            height: min(560px, calc(100svh - 104px - env(safe-area-inset-bottom)));
+            max-height: calc(100svh - 104px - env(safe-area-inset-bottom));
+          }
+
+          .chat-panel-header {
+            padding: 14px 14px;
+          }
+
+          .chat-messages {
+            padding: 12px;
+          }
+
+          .chat-message {
+            max-width: 90%;
+            font-size: 13px;
+          }
+
+          .chat-form {
+            grid-template-columns: minmax(0, 1fr) auto;
+            padding: 10px;
+          }
+
+          .chat-form input {
+            height: 40px;
+          }
+
+          .chat-form button {
+            min-width: 52px;
+            height: 40px;
+            font-size: 13px;
           }
         }
       `}</style>
