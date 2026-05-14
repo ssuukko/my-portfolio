@@ -17,7 +17,6 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
 import java.time.Instant;
 import java.util.HexFormat;
 import java.util.List;
@@ -58,25 +57,6 @@ public class CloudinaryUploadService {
 
         String filename = StringUtils.cleanPath(file.getOriginalFilename() == null ? "image" : file.getOriginalFilename());
         return uploadBytes(file.getBytes(), file.getContentType(), filename);
-    }
-
-    public ImageUploadResponse uploadDataUrl(String dataUrl, String filename) throws IOException {
-        validateConfig();
-
-        DataUrlParts dataUrlParts = parseDataUrl(dataUrl);
-        if (!dataUrlParts.contentType().startsWith("image/")) {
-            throw new IllegalArgumentException("이미지 data URL만 업로드할 수 있습니다.");
-        }
-
-        if (dataUrlParts.data().length > MAX_IMAGE_SIZE) {
-            throw new IllegalArgumentException("이미지는 5MB 이하만 업로드할 수 있습니다.");
-        }
-
-        return uploadBytes(dataUrlParts.data(), dataUrlParts.contentType(), filename);
-    }
-
-    public boolean isDataImageUrl(String value) {
-        return value != null && value.regionMatches(true, 0, "data:image/", 0, 11);
     }
 
     private ImageUploadResponse uploadBytes(
@@ -193,28 +173,5 @@ public class CloudinaryUploadService {
         );
 
         outputStream.write((String.join("\r\n", lines) + "\r\n").getBytes(StandardCharsets.UTF_8));
-    }
-
-    private DataUrlParts parseDataUrl(String dataUrl) {
-        if (dataUrl == null || !dataUrl.regionMatches(true, 0, "data:", 0, 5)) {
-            throw new IllegalArgumentException("data URL 형식이 아닙니다.");
-        }
-
-        int commaIndex = dataUrl.indexOf(',');
-        if (commaIndex < 0) {
-            throw new IllegalArgumentException("data URL 형식이 아닙니다.");
-        }
-
-        String metadata = dataUrl.substring(5, commaIndex);
-        if (!metadata.toLowerCase().contains(";base64")) {
-            throw new IllegalArgumentException("base64 data URL만 업로드할 수 있습니다.");
-        }
-
-        String contentType = metadata.substring(0, metadata.indexOf(';'));
-        byte[] data = Base64.getDecoder().decode(dataUrl.substring(commaIndex + 1));
-        return new DataUrlParts(contentType, data);
-    }
-
-    private record DataUrlParts(String contentType, byte[] data) {
     }
 }
