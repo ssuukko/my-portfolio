@@ -82,7 +82,7 @@ public class AdminAuthInterceptor implements HandlerInterceptor {
             return false;
         }
 
-        return path.startsWith("/api/projects") || path.equals("/api/visits");
+        return path.startsWith("/api/projects") || path.startsWith("/api/uploads") || path.equals("/api/visits");
     }
 
     private String decodeBasicCredentials(String authorization) {

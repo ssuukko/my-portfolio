@@ -25,6 +25,12 @@ public interface ProjectMapper {
 
     void update(Project project);
 
+    void updateImages(
+            @Param("id") Long id,
+            @Param("thumbnailUrl") String thumbnailUrl,
+            @Param("featureImageUrls") String featureImageUrls
+    );
+
     void updateDisplayOrder(
             @Param("id") Long id,
             @Param("displayOrder") Integer displayOrder

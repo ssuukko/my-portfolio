@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { uploadImage } from '../api/projectApi'
 
 const getDateValue = (date) => {
   if (!date) {
@@ -64,6 +65,7 @@ function ProjectFormModal({ project, onClose, onSubmit }) {
   const [formData, setFormData] = useState(() => createInitialFormData(project))
   const [featureImageUrlInput, setFeatureImageUrlInput] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
 
   const handleChange = (event) => {
     const { name, value } = event.target
@@ -74,7 +76,7 @@ function ProjectFormModal({ project, onClose, onSubmit }) {
     }))
   }
 
-  const handleThumbnailFileChange = (event) => {
+  const handleThumbnailFileChange = async (event) => {
     const file = event.target.files?.[0]
 
     if (!file) {
@@ -93,19 +95,23 @@ function ProjectFormModal({ project, onClose, onSubmit }) {
       return
     }
 
-    const reader = new FileReader()
-
-    reader.onload = () => {
+    try {
+      setIsUploadingImage(true)
+      const uploadedImage = await uploadImage(file)
       setFormData((currentFormData) => ({
         ...currentFormData,
-        thumbnailUrl: String(reader.result),
+        thumbnailUrl: uploadedImage.url,
       }))
+    } catch (error) {
+      console.error('Failed to upload thumbnail image:', error)
+      alert(error.message || '썸네일 이미지 업로드에 실패했습니다.')
+    } finally {
+      setIsUploadingImage(false)
+      event.target.value = ''
     }
-
-    reader.readAsDataURL(file)
   }
 
-  const handleFeatureImageFileChange = (event) => {
+  const handleFeatureImageFileChange = async (event) => {
     const files = Array.from(event.target.files ?? [])
 
     if (files.length === 0) {
@@ -136,16 +142,12 @@ function ProjectFormModal({ project, onClose, onSubmit }) {
       return
     }
 
-    Promise.all(
-      files.map(
-        (file) =>
-          new Promise((resolve) => {
-            const reader = new FileReader()
-            reader.onload = () => resolve(String(reader.result))
-            reader.readAsDataURL(file)
-          }),
-      ),
-    ).then((imageUrls) => {
+    try {
+      setIsUploadingImage(true)
+      const imageUrls = await Promise.all(
+        files.map((file) => uploadImage(file).then((uploadedImage) => uploadedImage.url)),
+      )
+
       setFormData((currentFormData) => {
         const currentUrls = parseImageUrls(currentFormData.featureImageUrls)
 
@@ -158,7 +160,13 @@ function ProjectFormModal({ project, onClose, onSubmit }) {
           ),
         }
       })
-    })
+    } catch (error) {
+      console.error('Failed to upload feature images:', error)
+      alert(error.message || '기능 이미지 업로드에 실패했습니다.')
+    } finally {
+      setIsUploadingImage(false)
+      event.target.value = ''
+    }
   }
 
   const handleAddFeatureImageUrls = () => {
@@ -378,13 +386,15 @@ function ProjectFormModal({ project, onClose, onSubmit }) {
                 type="text"
                 value={formData.thumbnailUrl}
                 onChange={handleChange}
+                disabled={isUploadingImage}
               />
               <label className="file-pick-button">
-                파일 선택
+                {isUploadingImage ? '업로드 중...' : '파일 선택'}
                 <input
                   type="file"
                   accept="image/*"
                   onChange={handleThumbnailFileChange}
+                  disabled={isUploadingImage}
                 />
               </label>
             </div>
@@ -410,21 +420,24 @@ function ProjectFormModal({ project, onClose, onSubmit }) {
                 onChange={(event) => setFeatureImageUrlInput(event.target.value)}
                 onKeyDown={handleFeatureImageUrlInputKeyDown}
                 placeholder="이미지 URL 붙여넣기"
+                disabled={isUploadingImage}
               />
               <button
                 className="feature-url-add-button"
                 type="button"
                 onClick={handleAddFeatureImageUrls}
+                disabled={isUploadingImage}
               >
                 추가
               </button>
               <label className="file-pick-button">
-                파일 추가
+                {isUploadingImage ? '업로드 중...' : '파일 추가'}
                 <input
                   type="file"
                   accept="image/*"
                   multiple
                   onChange={handleFeatureImageFileChange}
+                  disabled={isUploadingImage}
                 />
               </label>
             </div>
@@ -611,7 +624,7 @@ function ProjectFormModal({ project, onClose, onSubmit }) {
             <button className="secondary-button" type="button" onClick={onClose}>
               취소
             </button>
-            <button className="primary-button" type="submit" disabled={isSubmitting}>
+            <button className="primary-button" type="submit" disabled={isSubmitting || isUploadingImage}>
               {isSubmitting ? '저장 중...' : '저장'}
             </button>
           </div>
