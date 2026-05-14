@@ -3,6 +3,11 @@
   box-sizing: border-box;
 }
 
+.pd-page,
+.pd-page * {
+  box-sizing: border-box;
+}
+
 :root {
   --paper: #f7f8fb;
   --paper-deep: #eef1f6;
