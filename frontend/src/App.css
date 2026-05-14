@@ -907,6 +907,192 @@ body {
   border: 1px solid var(--pd-border);
 }
 
+/* User pages mobile polish */
+.pd-page {
+  overflow-x: hidden;
+}
+
+@media (max-width: 760px) {
+  .pf-header {
+    justify-content: center;
+  }
+
+  .pf-brand {
+    min-width: 0;
+  }
+
+  .pf-brand__name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pd-hero {
+    padding: 24px 16px 24px;
+  }
+
+  .pd-hero__media,
+  .pd-feature-shot,
+  .pf-card {
+    border-radius: 14px;
+  }
+
+  .pd-hero__title {
+    font-size: 30px;
+    overflow-wrap: anywhere;
+  }
+
+  .pd-hero__summary {
+    line-height: 1.65;
+  }
+
+  .pd-hero__actions .pd-btn,
+  .pd-footer__actions .pd-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .pd-facts__item {
+    width: 100%;
+    padding: 18px 16px;
+  }
+
+  .pd-facts__value {
+    justify-content: center;
+    text-align: center;
+    overflow-wrap: anywhere;
+  }
+
+  .pd-feature-gallery__header {
+    margin-bottom: 18px;
+  }
+
+  .pd-feature-gallery__grid {
+    gap: 14px;
+  }
+
+  .pd-feature-shot img {
+    height: auto;
+    aspect-ratio: auto;
+    object-fit: contain;
+    background: #f8fafc;
+  }
+
+  .pd-feature-shot figcaption {
+    position: static;
+    justify-content: flex-start;
+    max-width: none;
+    min-height: 0;
+    margin: 0;
+    padding: 10px 12px;
+    border-radius: 0;
+    background: #ffffff;
+    white-space: normal;
+  }
+
+  .pd-feature-shot figcaption strong {
+    white-space: normal;
+  }
+
+  .pd-section {
+    padding: 22px 18px;
+    border-radius: 14px;
+  }
+
+  .pd-section__body {
+    padding-left: 0;
+  }
+
+  .pd-prose,
+  .pd-checklist li {
+    font-size: 15px;
+    line-height: 1.72;
+    overflow-wrap: anywhere;
+  }
+
+  .pd-tech {
+    height: auto;
+    min-height: 34px;
+    padding: 7px 12px;
+    overflow-wrap: anywhere;
+  }
+
+  .pf-main {
+    padding: 34px 16px max(34px, env(safe-area-inset-bottom));
+  }
+
+  .pf-hero {
+    margin-bottom: 34px;
+  }
+
+  .pf-hero__title {
+    font-size: 36px;
+    overflow-wrap: anywhere;
+  }
+
+  .pf-gallery {
+    gap: 18px;
+  }
+
+  .pf-card__media {
+    min-height: 0;
+    aspect-ratio: 16 / 11;
+  }
+
+  .pf-card__content {
+    padding: 20px;
+  }
+
+  .pf-card__title {
+    overflow-wrap: anywhere;
+  }
+
+  .pf-card__summary {
+    margin-bottom: 18px;
+  }
+
+  .pf-card__footer {
+    padding-top: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .pf-hero__title {
+    font-size: 30px;
+  }
+
+  .pd-hero {
+    padding: 18px 12px 22px;
+  }
+
+  .pd-hero__title {
+    font-size: 27px;
+  }
+
+  .pd-hero__meta,
+  .pf-card__meta {
+    gap: 6px;
+  }
+
+  .pd-badge {
+    max-width: 100%;
+    height: auto;
+    min-height: 30px;
+    padding: 6px 10px;
+    white-space: normal;
+  }
+
+  .pd-btn {
+    min-height: 42px;
+    padding: 0 14px;
+    font-size: 13px;
+  }
+
+  .pd-section {
+    padding: 18px 14px;
+  }
+}
+
 .pd-badge--attachment {
   color: #1d4ed8;
   background: #eff6ff;
@@ -2229,5 +2415,130 @@ body {
 
   .pf-card__title {
     font-size: 22px;
+  }
+}
+
+@media (max-width: 760px) {
+  .pd-page {
+    overflow-x: hidden;
+  }
+
+  .pf-header {
+    justify-content: center;
+  }
+
+  .pd-hero {
+    padding: 24px 16px 24px;
+  }
+
+  .pd-hero__title {
+    font-size: 30px;
+    overflow-wrap: anywhere;
+  }
+
+  .pd-hero__actions .pd-btn,
+  .pd-footer__actions .pd-btn {
+    width: 100%;
+  }
+
+  .pd-facts__item {
+    width: 100%;
+    padding: 18px 16px;
+  }
+
+  .pd-facts__value {
+    justify-content: center;
+    text-align: center;
+    overflow-wrap: anywhere;
+  }
+
+  .pd-feature-shot img {
+    height: auto;
+    aspect-ratio: auto;
+    object-fit: contain;
+  }
+
+  .pd-feature-shot figcaption {
+    position: static;
+    max-width: none;
+    border-radius: 0;
+    white-space: normal;
+  }
+
+  .pd-feature-shot figcaption strong {
+    white-space: normal;
+  }
+
+  .pd-section {
+    padding: 22px 18px;
+    border-radius: 14px;
+  }
+
+  .pd-section__body {
+    padding-left: 0;
+  }
+
+  .pd-prose,
+  .pd-checklist li,
+  .pd-tech {
+    overflow-wrap: anywhere;
+  }
+
+  .pf-main {
+    padding: 34px 16px max(34px, env(safe-area-inset-bottom));
+  }
+
+  .pf-hero {
+    margin-bottom: 34px;
+  }
+
+  .pf-hero__title {
+    font-size: 36px;
+    overflow-wrap: anywhere;
+  }
+
+  .pf-gallery {
+    gap: 18px;
+  }
+
+  .pf-card {
+    border-radius: 14px;
+  }
+
+  .pf-card__media {
+    min-height: 0;
+    aspect-ratio: 16 / 11;
+  }
+
+  .pf-card__content {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .pf-hero__title {
+    font-size: 30px;
+  }
+
+  .pd-hero {
+    padding: 18px 12px 22px;
+  }
+
+  .pd-hero__title {
+    font-size: 27px;
+  }
+
+  .pd-badge {
+    max-width: 100%;
+    height: auto;
+    min-height: 30px;
+    padding: 6px 10px;
+    white-space: normal;
+  }
+
+  .pd-btn {
+    min-height: 42px;
+    padding: 0 14px;
+    font-size: 13px;
   }
 }
