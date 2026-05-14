@@ -30,6 +30,12 @@ portfolio:
   admin-username: ${PORTFOLIO_ADMIN_USERNAME:ssh}
   admin-password: ${PORTFOLIO_ADMIN_PASSWORD:ssh}
 
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME:dfbuk74qp}
+  api-key: ${CLOUDINARY_API_KEY:}
+  api-secret: ${CLOUDINARY_API_SECRET:}
+  asset-folder: ${CLOUDINARY_ASSET_FOLDER:my-portfolio/images}
+
 langchain4j:
   open-ai:
     chat-model:

@@ -145,6 +145,20 @@ export const logVisit = async (body) => {
   return data.data
 }
 
+export const uploadImage = async (file) => {
+  const formData = new FormData()
+  formData.append('file', file)
+
+  const data = await request('/api/uploads/images', {
+    method: 'POST',
+    headers: getAdminHeaders(),
+    body: formData,
+    timeout: 60000,
+  })
+
+  return data.data
+}
+
 export const fetchVisits = async () => {
   const data = await request('/api/visits', {
     headers: getAdminHeaders(),
