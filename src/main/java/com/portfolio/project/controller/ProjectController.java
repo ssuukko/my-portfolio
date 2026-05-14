@@ -27,9 +27,8 @@ import com.portfolio.project.dto.ProjectUpdateRequest;
 import com.portfolio.project.service.ProjectService;
 import jakarta.validation.Valid;
 
-import java.util.List;
-import java.util.Base64;
 import java.io.IOException;
+import java.util.List;
 
 import lombok.RequiredArgsConstructor;
 
@@ -68,30 +67,6 @@ public class ProjectController {
     public ResponseEntity<ApiResponse<List<ProjectResponse>>> getProjectSummaries() {
         List<ProjectResponse> projects = projectService.getProjectSummaries();
         return ResponseEntity.ok(ApiResponse.success(projects, "프로젝트 요약 목록 조회에 성공했습니다."));
-    }
-
-    @GetMapping("/projects/{id}/thumbnail")
-    public ResponseEntity<byte[]> getProjectThumbnail(@PathVariable Long id) {
-        ProjectResponse project = projectService.getProject(id);
-        String thumbnailUrl = project.thumbnailUrl();
-
-        if (thumbnailUrl == null || !thumbnailUrl.regionMatches(true, 0, "data:", 0, 5)) {
-            return ResponseEntity.notFound().build();
-        }
-
-        int commaIndex = thumbnailUrl.indexOf(',');
-        String metadata = commaIndex > 0 ? thumbnailUrl.substring(5, commaIndex) : "";
-
-        if (commaIndex < 0 || !metadata.toLowerCase().contains(";base64")) {
-            return ResponseEntity.notFound().build();
-        }
-
-        String contentType = metadata.substring(0, metadata.indexOf(';'));
-        byte[] imageBytes = Base64.getDecoder().decode(thumbnailUrl.substring(commaIndex + 1));
-
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(contentType))
-                .body(imageBytes);
     }
 
     @GetMapping("/projects/{id}")

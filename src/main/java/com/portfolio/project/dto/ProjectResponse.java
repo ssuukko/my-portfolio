@@ -64,14 +64,12 @@ public record ProjectResponse(
     }
 
     public static ProjectResponse fromSummary(Project project) {
-        String thumbnailUrl = project.getThumbnailUrl();
-
         return new ProjectResponse(
                 project.getId(),
                 project.getTitle(),
                 project.getSummary(),
                 null,
-                isDataUrl(thumbnailUrl) ? null : thumbnailUrl,
+                project.getThumbnailUrl(),
                 null,
                 null,
                 project.getProjectUrl(),
@@ -93,9 +91,5 @@ public record ProjectResponse(
                 project.getCreatedAt(),
                 project.getUpdatedAt()
         );
-    }
-
-    private static boolean isDataUrl(String value) {
-        return value != null && value.regionMatches(true, 0, "data:", 0, 5);
     }
 }

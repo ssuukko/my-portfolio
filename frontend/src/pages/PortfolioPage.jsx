@@ -1,7 +1,6 @@
 import { memo, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  buildApiUrl,
   fetchProjectSummaries,
   fetchStaticProjectSummaries,
   logVisit,
@@ -51,19 +50,6 @@ const mergeProjects = (snapshotProjects, liveProjects) => {
   return mergedProjects
 }
 
-const getProjectThumbnailFallbackUrl = (project) => (
-  project.id
-    ? buildApiUrl(
-        `/api/projects/${project.id}/thumbnail?v=${encodeURIComponent(project.updatedAt ?? '')}`,
-        { cached: true },
-      )
-    : ''
-)
-
-const getProjectThumbnailUrl = (project) => (
-  project.thumbnailUrl || getProjectThumbnailFallbackUrl(project)
-)
-
 const isAdminVisit = () => {
   const searchParams = new URLSearchParams(window.location.search)
   const refParam = searchParams.get('ref')?.trim() ?? ''
@@ -82,21 +68,20 @@ const ArrowRightIcon = () => (
   </svg>
 )
 
-function ProjectThumbnail({ alt, fallbackSrc, initial, src }) {
+function ProjectThumbnail({ alt, initial, src }) {
   const [retryCount, setRetryCount] = useState(0)
   const [status, setStatus] = useState(src ? 'loading' : 'empty')
-  const [activeSrc, setActiveSrc] = useState(src)
 
   const retrySrc = useMemo(() => {
-    if (!activeSrc || retryCount === 0) {
-      return activeSrc
+    if (!src || retryCount === 0) {
+      return src
     }
 
-    const separator = activeSrc.includes('?') ? '&' : '?'
-    return `${activeSrc}${separator}retry=${retryCount}`
-  }, [activeSrc, retryCount])
+    const separator = src.includes('?') ? '&' : '?'
+    return `${src}${separator}retry=${retryCount}`
+  }, [src, retryCount])
 
-  if (!activeSrc || status === 'error') {
+  if (!src || status === 'error') {
     return (
       <div className="pd-hero__placeholder">
         <span>{initial}</span>
@@ -118,13 +103,6 @@ function ProjectThumbnail({ alt, fallbackSrc, initial, src }) {
         fetchPriority="high"
         onLoad={() => setStatus('loaded')}
         onError={() => {
-          if (fallbackSrc && activeSrc !== fallbackSrc) {
-            setActiveSrc(fallbackSrc)
-            setRetryCount(0)
-            setStatus('loading')
-            return
-          }
-
           if (retryCount < 2) {
             window.setTimeout(() => setRetryCount((count) => count + 1), 350 * (retryCount + 1))
             return
@@ -138,8 +116,7 @@ function ProjectThumbnail({ alt, fallbackSrc, initial, src }) {
 }
 
 const ProjectCard = memo(function ProjectCard({ onOpen, project }) {
-  const thumbnailUrl = getProjectThumbnailUrl(project)
-  const thumbnailFallbackUrl = getProjectThumbnailFallbackUrl(project)
+  const thumbnailUrl = project.thumbnailUrl || ''
 
   return (
     <article
@@ -150,7 +127,6 @@ const ProjectCard = memo(function ProjectCard({ onOpen, project }) {
       <div className="pf-card__media">
         <ProjectThumbnail
           alt={`${project.title} 썸네일`}
-          fallbackSrc={thumbnailFallbackUrl}
           initial={getProjectInitial(project.title)}
           key={thumbnailUrl || project.id || project.title}
           src={thumbnailUrl}
