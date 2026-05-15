@@ -5,6 +5,7 @@ const RENDER_API_URL = (
   process.env.VITE_API_URL ||
   'https://my-portfolio-yol2.onrender.com'
 ).replace(/\/$/, '')
+const SUMMARY_CACHE_CONTROL = 's-maxage=300, stale-while-revalidate=86400'
 
 const toCardSummary = (project) => ({
   id: project.id,
@@ -42,7 +43,7 @@ export default async function handler(request, response) {
 
     if (!upstream.ok || !contentType.includes('application/json')) {
       response.setHeader('Content-Type', contentType)
-      response.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=604800')
+      response.setHeader('Cache-Control', 'no-store, max-age=0')
       response.status(upstream.status).send(body)
       return
     }
@@ -53,13 +54,13 @@ export default async function handler(request, response) {
       : []
 
     response.setHeader('Content-Type', 'application/json')
-    response.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=604800')
+    response.setHeader('Cache-Control', SUMMARY_CACHE_CONTROL)
     response.status(upstream.status).json({
       ...data,
       data: summaries,
     })
   } catch {
-    response.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=300')
+    response.setHeader('Cache-Control', 'no-store, max-age=0')
     response.status(502).json({
       success: false,
       message: '프로젝트 목록 원본 서버 응답이 지연되고 있습니다.',

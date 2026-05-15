@@ -64,7 +64,7 @@ public class ProjectServiceImpl implements ProjectService {
     public List<ProjectResponse> getAllProjects() {
         return projectMapper.findAll()
                 .stream()
-                .map((project) -> ProjectResponse.from(project, findTroubleShootingItems(project)))
+                .map(ProjectResponse::from)
                 .toList();
     }
 

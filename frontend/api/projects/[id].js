@@ -5,6 +5,7 @@ const RENDER_API_URL = (
   process.env.VITE_API_URL ||
   'https://my-portfolio-yol2.onrender.com'
 ).replace(/\/$/, '')
+const DETAIL_CACHE_CONTROL = 's-maxage=300, stale-while-revalidate=86400'
 
 export default async function handler(request, response) {
   if (request.method !== 'GET') {
@@ -24,10 +25,13 @@ export default async function handler(request, response) {
     const body = await upstream.text()
 
     response.setHeader('Content-Type', upstream.headers.get('content-type') || 'application/json')
-    response.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=604800')
+    response.setHeader(
+      'Cache-Control',
+      upstream.ok ? DETAIL_CACHE_CONTROL : 'no-store, max-age=0',
+    )
     response.status(upstream.status).send(body)
   } catch {
-    response.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=300')
+    response.setHeader('Cache-Control', 'no-store, max-age=0')
     response.status(502).json({
       success: false,
       message: '프로젝트 상세 원본 서버 응답이 지연되고 있습니다.',
