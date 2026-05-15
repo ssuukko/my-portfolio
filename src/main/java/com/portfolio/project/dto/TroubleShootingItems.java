@@ -147,6 +147,14 @@ public final class TroubleShootingItems {
             String title = solution.title() == null ? "방안 " + (index + 1) : solution.title();
             String content = solution.content() == null ? "" : " - " + solution.content();
             lines.add(title + content);
+
+            if (solution.pros() != null) {
+                lines.add("장점: " + solution.pros());
+            }
+
+            if (solution.cons() != null) {
+                lines.add("단점: " + solution.cons());
+            }
         }
 
         if (item.selectedSolutionIndex() != null && item.selectedSolutionIndex() < solutions.size()) {
@@ -179,12 +187,14 @@ public final class TroubleShootingItems {
 
             String title = normalizeText(solution.title());
             String content = normalizeText(solution.content());
+            String pros = normalizeText(solution.pros());
+            String cons = normalizeText(solution.cons());
 
-            if (title == null && content == null) {
+            if (title == null && content == null && pros == null && cons == null) {
                 continue;
             }
 
-            normalizedSolutions.add(new TroubleShootingSolution(title, content));
+            normalizedSolutions.add(new TroubleShootingSolution(title, content, pros, cons));
         }
 
         return List.copyOf(normalizedSolutions);

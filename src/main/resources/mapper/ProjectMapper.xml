@@ -182,6 +182,97 @@
         WHERE id = #{id}
     </update>
 
+    <select id="findTroublesByProjectId" parameterType="long" resultType="ProjectTrouble">
+        SELECT
+            id,
+            project_id,
+            title,
+            problem,
+            selected_solution_id,
+            selected_reason,
+            sort_order,
+            created_at,
+            updated_at
+        FROM project_troubles
+        WHERE project_id = #{projectId}
+        ORDER BY sort_order ASC, id ASC
+    </select>
+
+    <select id="findTroubleSolutionsByProjectId" parameterType="long" resultType="ProjectTroubleSolution">
+        SELECT
+            pts.id,
+            pts.trouble_id,
+            pts.title,
+            NULL AS content,
+            pts.pros,
+            pts.cons,
+            pts.sort_order,
+            pts.created_at,
+            pts.updated_at
+        FROM project_trouble_solutions pts
+        INNER JOIN project_troubles pt
+            ON pt.id = pts.trouble_id
+        WHERE pt.project_id = #{projectId}
+        ORDER BY pts.trouble_id ASC, pts.sort_order ASC, pts.id ASC
+    </select>
+
+    <insert id="insertTrouble" parameterType="ProjectTrouble" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO project_troubles (
+            project_id,
+            title,
+            problem,
+            selected_solution_id,
+            selected_reason,
+            sort_order,
+            created_at,
+            updated_at
+        )
+        VALUES (
+            #{projectId},
+            #{title},
+            #{problem},
+            #{selectedSolutionId},
+            #{selectedReason},
+            #{sortOrder},
+            #{createdAt},
+            #{updatedAt}
+        )
+    </insert>
+
+    <insert id="insertTroubleSolution" parameterType="ProjectTroubleSolution" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO project_trouble_solutions (
+            trouble_id,
+            title,
+            pros,
+            cons,
+            sort_order,
+            created_at,
+            updated_at
+        )
+        VALUES (
+            #{troubleId},
+            #{title},
+            #{pros},
+            #{cons},
+            #{sortOrder},
+            #{createdAt},
+            #{updatedAt}
+        )
+    </insert>
+
+    <update id="updateTroubleSelectedSolution">
+        UPDATE project_troubles
+        SET
+            selected_solution_id = #{selectedSolutionId},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteTroublesByProjectId" parameterType="long">
+        DELETE FROM project_troubles
+        WHERE project_id = #{projectId}
+    </delete>
+
     <update id="updateDisplayOrder">
         UPDATE projects
         SET

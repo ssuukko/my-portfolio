@@ -7,17 +7,26 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.portfolio.chat.service.PineconeProjectSyncService;
 import com.portfolio.project.domain.Project;
+import com.portfolio.project.domain.ProjectTrouble;
+import com.portfolio.project.domain.ProjectTroubleSolution;
 import com.portfolio.project.dto.ProjectAttachmentResponse;
 import com.portfolio.project.dto.ProjectCreateRequest;
 import com.portfolio.project.dto.ProjectOrderUpdateRequest;
 import com.portfolio.project.dto.ProjectResponse;
 import com.portfolio.project.dto.ProjectUpdateRequest;
+import com.portfolio.project.dto.TroubleShootingItem;
+import com.portfolio.project.dto.TroubleShootingItems;
+import com.portfolio.project.dto.TroubleShootingSolution;
 import com.portfolio.project.mapper.ProjectMapper;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 
@@ -40,6 +49,7 @@ public class ProjectServiceImpl implements ProjectService {
             project.updateDisplayOrder(projectMapper.findNextDisplayOrder());
         }
         projectMapper.save(project);
+        replaceTroubleShootingItems(project.getId(), TroubleShootingItems.parse(project.getTroubleShooting()));
         pineconeProjectSyncService.upsert(project);
         return project.getId();
     }
@@ -47,14 +57,14 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public ProjectResponse getProject(Long id) {
         Project project = findProject(id);
-        return ProjectResponse.from(project);
+        return ProjectResponse.from(project, findTroubleShootingItems(project));
     }
 
     @Override
     public List<ProjectResponse> getAllProjects() {
         return projectMapper.findAll()
                 .stream()
-                .map(ProjectResponse::from)
+                .map((project) -> ProjectResponse.from(project, findTroubleShootingItems(project)))
                 .toList();
     }
 
@@ -90,6 +100,7 @@ public class ProjectServiceImpl implements ProjectService {
                 request.displayOrder() == null ? project.getDisplayOrder() : request.displayOrder()
         );
         projectMapper.update(project);
+        replaceTroubleShootingItems(project.getId(), TroubleShootingItems.parse(project.getTroubleShooting()));
         pineconeProjectSyncService.upsert(project);
     }
 
@@ -160,6 +171,114 @@ public class ProjectServiceImpl implements ProjectService {
     private Project findProject(Long id) {
         return projectMapper.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("프로젝트를 찾을 수 없습니다. id=" + id));
+    }
+
+    private List<TroubleShootingItem> findTroubleShootingItems(Project project) {
+        List<ProjectTrouble> troubles = projectMapper.findTroublesByProjectId(project.getId());
+
+        if (troubles.isEmpty()) {
+            return TroubleShootingItems.parse(project.getTroubleShooting());
+        }
+
+        Map<Long, List<ProjectTroubleSolution>> solutionsByTroubleId = projectMapper
+                .findTroubleSolutionsByProjectId(project.getId())
+                .stream()
+                .collect(Collectors.groupingBy(ProjectTroubleSolution::getTroubleId));
+
+        List<TroubleShootingItem> items = new ArrayList<>();
+
+        for (ProjectTrouble trouble : troubles) {
+            List<ProjectTroubleSolution> solutionRows = solutionsByTroubleId.getOrDefault(
+                    trouble.getId(),
+                    List.of()
+            );
+            List<TroubleShootingSolution> solutions = solutionRows.stream()
+                    .map((solution) -> new TroubleShootingSolution(
+                            solution.getTitle(),
+                            solution.getContent(),
+                            solution.getPros(),
+                            solution.getCons()
+                    ))
+                    .toList();
+            Integer selectedSolutionIndex = getSelectedSolutionIndex(
+                    solutionRows,
+                    trouble.getSelectedSolutionId()
+            );
+
+            items.add(new TroubleShootingItem(
+                    trouble.getTitle(),
+                    trouble.getProblem(),
+                    null,
+                    solutions,
+                    selectedSolutionIndex,
+                    trouble.getSelectedReason()
+            ));
+        }
+
+        return items;
+    }
+
+    private void replaceTroubleShootingItems(Long projectId, List<TroubleShootingItem> items) {
+        projectMapper.deleteTroublesByProjectId(projectId);
+
+        for (int troubleIndex = 0; troubleIndex < items.size(); troubleIndex += 1) {
+            TroubleShootingItem item = items.get(troubleIndex);
+            ProjectTrouble trouble = new ProjectTrouble();
+            trouble.setProjectId(projectId);
+            trouble.setTitle(item.title());
+            trouble.setProblem(item.problem());
+            trouble.setSelectedReason(item.selectedReason());
+            trouble.setSortOrder(troubleIndex + 1);
+            trouble.setCreatedAt(LocalDateTime.now());
+            trouble.setUpdatedAt(trouble.getCreatedAt());
+
+            projectMapper.insertTrouble(trouble);
+
+            List<TroubleShootingSolution> solutions = item.solutions() == null
+                    ? List.of()
+                    : item.solutions();
+            Long selectedSolutionId = null;
+
+            for (int solutionIndex = 0; solutionIndex < solutions.size(); solutionIndex += 1) {
+                TroubleShootingSolution solution = solutions.get(solutionIndex);
+                ProjectTroubleSolution solutionRow = new ProjectTroubleSolution();
+                solutionRow.setTroubleId(trouble.getId());
+                solutionRow.setTitle(solution.title());
+                solutionRow.setContent(solution.content());
+                solutionRow.setPros(solution.pros());
+                solutionRow.setCons(solution.cons());
+                solutionRow.setSortOrder(solutionIndex + 1);
+                solutionRow.setCreatedAt(LocalDateTime.now());
+                solutionRow.setUpdatedAt(solutionRow.getCreatedAt());
+
+                projectMapper.insertTroubleSolution(solutionRow);
+
+                if (item.selectedSolutionIndex() != null && item.selectedSolutionIndex() == solutionIndex) {
+                    selectedSolutionId = solutionRow.getId();
+                }
+            }
+
+            if (selectedSolutionId != null) {
+                projectMapper.updateTroubleSelectedSolution(trouble.getId(), selectedSolutionId);
+            }
+        }
+    }
+
+    private Integer getSelectedSolutionIndex(
+            List<ProjectTroubleSolution> solutions,
+            Long selectedSolutionId
+    ) {
+        if (selectedSolutionId == null) {
+            return solutions.isEmpty() ? null : 0;
+        }
+
+        for (int index = 0; index < solutions.size(); index += 1) {
+            if (selectedSolutionId.equals(solutions.get(index).getId())) {
+                return index;
+            }
+        }
+
+        return solutions.isEmpty() ? null : 0;
     }
 
     private void validateProjectExists(Long id) {

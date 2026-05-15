@@ -36,6 +36,10 @@ public record ProjectResponse(
 ) {
 
     public static ProjectResponse from(Project project) {
+        return from(project, TroubleShootingItems.parse(project.getTroubleShooting()));
+    }
+
+    public static ProjectResponse from(Project project, List<TroubleShootingItem> troubleShootingItems) {
         return new ProjectResponse(
                 project.getId(),
                 project.getTitle(),
@@ -51,7 +55,7 @@ public record ProjectResponse(
                 project.getTechStack(),
                 project.getMyRole(),
                 project.getTroubleShooting(),
-                TroubleShootingItems.parse(project.getTroubleShooting()),
+                troubleShootingItems,
                 project.getGithubUrl(),
                 project.getDeployUrl(),
                 project.getResult(),

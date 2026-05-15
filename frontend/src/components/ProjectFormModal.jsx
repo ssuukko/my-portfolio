@@ -11,6 +11,8 @@ const getDateValue = (date) => {
 
 const createEmptyTroubleSolution = () => ({
   title: '',
+  pros: '',
+  cons: '',
   content: '',
 })
 
@@ -30,9 +32,11 @@ const normalizeTroubleSolutions = (solutions) => {
   return solutions
     .map((solution) => ({
       title: solution?.title?.trim() ?? '',
+      pros: solution?.pros?.trim() ?? '',
+      cons: solution?.cons?.trim() ?? '',
       content: solution?.content?.trim() ?? '',
     }))
-    .filter((solution) => solution.title || solution.content)
+    .filter((solution) => solution.title || solution.pros || solution.cons || solution.content)
 }
 
 const normalizeTroubleItems = (items) => {
@@ -860,20 +864,42 @@ function ProjectFormModal({ project, onClose, onSubmit }) {
                                 }
                                 placeholder={`방안 ${solutionIndex + 1} 예: 서버 측 검증 로직 추가`}
                               />
-                              <textarea
-                                name="troubleSolutionContent"
-                                rows="3"
-                                value={solution.content}
-                                onChange={(event) =>
-                                  handleTroubleSolutionChange(
-                                    index,
-                                    solutionIndex,
-                                    'content',
-                                    event.target.value,
-                                  )
-                                }
-                                placeholder="장점, 단점, 비용, 적용 범위를 함께 적어두세요."
-                              />
+                              <div className="trouble-solution-compare-grid">
+                                <label>
+                                  <span>장점</span>
+                                  <textarea
+                                    name="troubleSolutionPros"
+                                    rows="3"
+                                    value={solution.pros}
+                                    onChange={(event) =>
+                                      handleTroubleSolutionChange(
+                                        index,
+                                        solutionIndex,
+                                        'pros',
+                                        event.target.value,
+                                      )
+                                    }
+                                    placeholder="기대 효과, 구현 이점, 운영상 장점을 줄바꿈으로 입력"
+                                  />
+                                </label>
+                                <label>
+                                  <span>단점</span>
+                                  <textarea
+                                    name="troubleSolutionCons"
+                                    rows="3"
+                                    value={solution.cons}
+                                    onChange={(event) =>
+                                      handleTroubleSolutionChange(
+                                        index,
+                                        solutionIndex,
+                                        'cons',
+                                        event.target.value,
+                                      )
+                                    }
+                                    placeholder="제약, 비용, 리스크를 줄바꿈으로 입력"
+                                  />
+                                </label>
+                              </div>
                             </div>
                             <button
                               className="trouble-inline-button trouble-inline-button--remove"

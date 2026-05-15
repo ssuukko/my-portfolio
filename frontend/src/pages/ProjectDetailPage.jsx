@@ -5,6 +5,7 @@ import {
   getProjectAttachmentDownloadUrl,
   logVisit,
 } from '../api/projectApi'
+import { DecisionAccordion } from '../components/DecisionAccordion'
 
 const formatDate = (date) => {
   if (!date) {
@@ -42,9 +43,11 @@ const normalizeTroubleItems = (items) => {
         ? item.solutions
             .map((solution) => ({
               title: solution?.title?.trim() ?? '',
+              pros: solution?.pros?.trim() ?? '',
+              cons: solution?.cons?.trim() ?? '',
               content: solution?.content?.trim() ?? '',
             }))
-            .filter((solution) => solution.title || solution.content)
+            .filter((solution) => solution.title || solution.pros || solution.cons || solution.content)
         : []
       const rawSelectedSolutionIndex = Number(item?.selectedSolutionIndex ?? 0)
       const selectedSolutionIndex =
@@ -105,6 +108,24 @@ const parseTroubleItems = (project) => {
     selectedReason: '',
   }))
 }
+
+const createTroubleDecisionProps = (item, index) => ({
+  eyebrow: '기술 의사결정',
+  title: item.title || `트러블슈팅 ${index + 1}`,
+  problem: item.problem,
+  options: item.solutions.map((solution, solutionIndex) => ({
+    id: `${index}-${solutionIndex}`,
+    number: String(solutionIndex + 1).padStart(2, '0'),
+    title: solution.title || `방안 ${solutionIndex + 1}`,
+    subtitle: `OPTION_${String(solutionIndex + 1).padStart(2, '0')}`,
+    description: solution.content || '장점과 단점을 비교해 검토한 해결 방안입니다.',
+    pros: splitLines(solution.pros || ''),
+    cons: splitLines(solution.cons || ''),
+    chosen: item.selectedSolutionIndex === solutionIndex,
+    chosenReason:
+      item.selectedSolutionIndex === solutionIndex ? item.selectedReason : undefined,
+  })),
+})
 
 const splitTechStack = (value) =>
   value
@@ -560,57 +581,24 @@ function ProjectDetailPage() {
               >
                 <div className="pd-trouble-list">
                   {troubleShootingItems.map((item, index) => (
-                    <article className="pd-trouble-card" key={`${item.title}-${index}`}>
-                      {item.title && <h3>{item.title}</h3>}
-                      {item.problem && (
-                        <div className="pd-trouble-card__content">
-                          <strong>문제</strong>
-                          {splitLines(item.problem).map((line) => (
-                            <p key={line}>{line}</p>
-                          ))}
-                        </div>
-                      )}
-                      {item.solutions.length > 0 && (
-                        <div className="pd-trouble-solutions">
-                          <strong>검토한 방안</strong>
-                          <ul>
-                            {item.solutions.map((solution, solutionIndex) => (
-                              <li
-                                className={
-                                  item.selectedSolutionIndex === solutionIndex
-                                    ? 'selected'
-                                    : undefined
-                                }
-                                key={`${solution.title}-${solutionIndex}`}
-                              >
-                                <span>{solution.title || `방안 ${solutionIndex + 1}`}</span>
-                                {solution.content && <p>{solution.content}</p>}
-                              </li>
+                    item.solutions.length > 0 ? (
+                      <DecisionAccordion
+                        key={`${item.title}-${index}`}
+                        {...createTroubleDecisionProps(item, index)}
+                      />
+                    ) : (
+                      <article className="pd-trouble-card" key={`${item.title}-${index}`}>
+                        {item.title && <h3>{item.title}</h3>}
+                        {item.problem && (
+                          <div className="pd-trouble-card__content">
+                            <strong>문제</strong>
+                            {splitLines(item.problem).map((line) => (
+                              <p key={line}>{line}</p>
                             ))}
-                          </ul>
-                        </div>
-                      )}
-                      {(item.selectedSolutionIndex !== null || item.selectedReason) && (
-                        <div className="pd-trouble-choice">
-                          {item.selectedSolutionIndex !== null &&
-                            item.solutions[item.selectedSolutionIndex] && (
-                              <p>
-                                <strong>선택한 방안</strong>
-                                <span>
-                                  {item.solutions[item.selectedSolutionIndex].title ||
-                                    `방안 ${item.selectedSolutionIndex + 1}`}
-                                </span>
-                              </p>
-                            )}
-                          {item.selectedReason && (
-                            <p>
-                              <strong>선택 이유</strong>
-                              <span>{item.selectedReason}</span>
-                            </p>
-                          )}
-                        </div>
-                      )}
-                    </article>
+                          </div>
+                        )}
+                      </article>
+                    )
                   ))}
                 </div>
               </DetailSection>
