@@ -282,9 +282,24 @@ my-portfolio/
 
 ---
 
-## 데이터베이스 스키마
+# 데이터베이스 스키마
 
-### projects 테이블
+## 테이블 목록
+
+| 테이블명 | 설명 |
+|----------|------|
+| `projects` | 포트폴리오 프로젝트 |
+| `project_attachments` | 프로젝트 첨부파일 |
+| `project_troubles` | 프로젝트 트러블슈팅 항목 |
+| `project_trouble_solutions` | 트러블슈팅 해결 방안 |
+| `visits` | 방문자 로그 |
+| `chat_logs` | AI 챗봇 대화 로그 |
+
+---
+
+## projects
+
+포트폴리오 프로젝트 기본 정보를 저장합니다.
 
 | 컬럼 | 타입 | 설명 |
 |------|------|------|
@@ -297,7 +312,7 @@ my-portfolio/
 | `feature_image_captions` | `TEXT` | 기능 화면 캡션 (줄바꿈 구분) |
 | `project_url` | `VARCHAR(500)` | 프로젝트 링크 |
 | `start_date` | `DATE` | 시작일 |
-| `end_date` | `DATE` | 종료일 (NULL = 진행 중) |
+| `end_date` | `DATE` | 종료일 (`NULL` = 진행 중) |
 | `use_yn` | `CHAR(1) DEFAULT 'Y'` | 공개 여부 |
 | `tech_stack` | `TEXT` | 기술 스택 (쉼표 구분) |
 | `my_role` | `TEXT` | 담당 역할 (줄바꿈 구분) |
@@ -309,7 +324,77 @@ my-portfolio/
 | `created_at` | `TIMESTAMP` | 생성일시 |
 | `updated_at` | `TIMESTAMP` | 수정일시 |
 
-### visits 테이블
+---
+
+## project_attachments
+
+프로젝트에 첨부된 파일(바이너리)을 저장합니다. 프로젝트당 1개 제한 (`project_id` UNIQUE).
+
+| 컬럼 | 타입 | 설명 |
+|------|------|------|
+| `id` | `BIGINT` (PK, Auto) | 첨부파일 ID |
+| `project_id` | `BIGINT NOT NULL` (FK → `projects.id`, UNIQUE) | 프로젝트 ID |
+| `filename` | `VARCHAR(255) NOT NULL` | 파일명 |
+| `content_type` | `VARCHAR(255) NOT NULL` | MIME 타입 |
+| `file_size` | `BIGINT NOT NULL` | 파일 크기 (bytes) |
+| `data` | `BYTEA NOT NULL` | 파일 바이너리 데이터 |
+| `created_at` | `TIMESTAMP` | 생성일시 |
+| `updated_at` | `TIMESTAMP` | 수정일시 |
+
+> `project_id`에 UNIQUE 제약이 있어 프로젝트당 하나의 첨부파일만 허용됩니다.  
+> 프로젝트 삭제 시 CASCADE 삭제됩니다.
+
+---
+
+## project_troubles
+
+프로젝트별 트러블슈팅 항목을 저장합니다.
+
+| 컬럼 | 타입 | 설명 |
+|------|------|------|
+| `id` | `BIGINT` (PK, Auto) | 트러블 ID |
+| `project_id` | `BIGINT NOT NULL` (FK → `projects.id`) | 프로젝트 ID |
+| `title` | `VARCHAR(255)` | 트러블 제목 |
+| `problem` | `TEXT` | 문제 상황 설명 |
+| `selected_solution_id` | `BIGINT` (FK → `project_trouble_solutions.id`) | 채택된 해결 방안 ID |
+| `selected_reason` | `TEXT` | 채택 이유 |
+| `sort_order` | `INTEGER DEFAULT 0 NOT NULL` | 표시 순서 |
+| `created_at` | `TIMESTAMP` | 생성일시 |
+| `updated_at` | `TIMESTAMP` | 수정일시 |
+
+**인덱스**
+- `idx_project_troubles_project_id` on `(project_id, sort_order, id)`
+
+> 프로젝트 삭제 시 CASCADE 삭제됩니다.  
+> `selected_solution_id` 참조 대상 삭제 시 `NULL`로 설정됩니다.
+
+---
+
+## project_trouble_solutions
+
+트러블슈팅 항목의 해결 방안 후보들을 저장합니다.
+
+| 컬럼 | 타입 | 설명 |
+|------|------|------|
+| `id` | `BIGINT` (PK, Auto) | 해결 방안 ID |
+| `trouble_id` | `BIGINT NOT NULL` (FK → `project_troubles.id`) | 트러블 ID |
+| `title` | `VARCHAR(255)` | 해결 방안 제목 |
+| `pros` | `TEXT` | 장점 |
+| `cons` | `TEXT` | 단점 |
+| `sort_order` | `INTEGER DEFAULT 0 NOT NULL` | 표시 순서 |
+| `created_at` | `TIMESTAMP` | 생성일시 |
+| `updated_at` | `TIMESTAMP` | 수정일시 |
+
+**인덱스**
+- `idx_project_trouble_solutions_trouble_id` on `(trouble_id, sort_order, id)`
+
+> 트러블 삭제 시 CASCADE 삭제됩니다.
+
+---
+
+## visits
+
+페이지 방문자 로그를 저장합니다.
 
 | 컬럼 | 타입 | 설명 |
 |------|------|------|
@@ -320,6 +405,32 @@ my-portfolio/
 | `ip_address` | `VARCHAR(100)` | 방문자 IP |
 | `user_agent` | `TEXT` | 브라우저 User-Agent |
 | `visited_at` | `TIMESTAMP` | 방문 일시 |
+
+---
+
+## chat_logs
+
+AI 챗봇 대화 내역 및 오류를 저장합니다.
+
+| 컬럼 | 타입 | 설명 |
+|------|------|------|
+| `id` | `BIGINT` (PK, Auto) | 로그 ID |
+| `question` | `TEXT NOT NULL` | 사용자 질문 |
+| `answer` | `TEXT` | AI 응답 |
+| `success_yn` | `CHAR(1) DEFAULT 'Y' NOT NULL` | 응답 성공 여부 |
+| `error_message` | `TEXT` | 오류 메시지 (실패 시) |
+| `created_at` | `TIMESTAMP` | 생성일시 |
+
+---
+
+## ERD (관계 요약)
+
+```
+projects (1) ──── (0..1) project_attachments
+projects (1) ──── (0..N) project_troubles
+project_troubles (1) ──── (0..N) project_trouble_solutions
+project_troubles.selected_solution_id ──── (0..1) project_trouble_solutions
+```
 
 ---
 
