@@ -83,7 +83,7 @@ public class ProjectServiceImpl implements ProjectService {
                 request.useYn(),
                 request.techStack(),
                 request.myRole(),
-                request.troubleShooting(),
+                request.serializedTroubleShooting(),
                 request.githubUrl(),
                 request.deployUrl(),
                 request.result(),

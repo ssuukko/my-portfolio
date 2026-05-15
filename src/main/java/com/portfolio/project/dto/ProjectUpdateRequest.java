@@ -3,6 +3,7 @@ package com.portfolio.project.dto;
 import jakarta.validation.constraints.NotBlank;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public record ProjectUpdateRequest(
         @NotBlank(message = "프로젝트 제목은 필수입니다.")
@@ -19,9 +20,13 @@ public record ProjectUpdateRequest(
         String techStack,
         String myRole,
         String troubleShooting,
+        List<TroubleShootingItem> troubleShootingItems,
         String githubUrl,
         String deployUrl,
         String result,
         Integer displayOrder
 ) {
+    public String serializedTroubleShooting() {
+        return TroubleShootingItems.serialize(troubleShootingItems, troubleShooting);
+    }
 }

@@ -9,6 +9,112 @@ const getDateValue = (date) => {
   return String(date).split('T')[0]
 }
 
+const createEmptyTroubleSolution = () => ({
+  title: '',
+  content: '',
+})
+
+const createEmptyTroubleItem = () => ({
+  title: '',
+  problem: '',
+  solutions: [createEmptyTroubleSolution()],
+  selectedSolutionIndex: 0,
+  selectedReason: '',
+})
+
+const normalizeTroubleSolutions = (solutions) => {
+  if (!Array.isArray(solutions)) {
+    return []
+  }
+
+  return solutions
+    .map((solution) => ({
+      title: solution?.title?.trim() ?? '',
+      content: solution?.content?.trim() ?? '',
+    }))
+    .filter((solution) => solution.title || solution.content)
+}
+
+const normalizeTroubleItems = (items) => {
+  if (!Array.isArray(items)) {
+    return []
+  }
+
+  return items
+    .map((item) => {
+      const solutions = normalizeTroubleSolutions(item?.solutions)
+      const rawSelectedSolutionIndex = Number(item?.selectedSolutionIndex ?? 0)
+      const selectedSolutionIndex =
+        solutions.length > 0 &&
+        Number.isInteger(rawSelectedSolutionIndex) &&
+        rawSelectedSolutionIndex >= 0 &&
+        rawSelectedSolutionIndex < solutions.length
+          ? rawSelectedSolutionIndex
+          : 0
+
+      return {
+        title: item?.title?.trim() ?? '',
+        problem: item?.problem?.trim() || item?.content?.trim() || '',
+        solutions,
+        selectedSolutionIndex,
+        selectedReason: item?.selectedReason?.trim() ?? '',
+      }
+    })
+    .filter(
+      (item) =>
+        item.title ||
+        item.problem ||
+        item.solutions.length > 0 ||
+        item.selectedReason,
+    )
+}
+
+const prepareTroubleItemsForForm = (items) =>
+  items.map((item) => ({
+    ...item,
+    solutions: item.solutions.length > 0 ? item.solutions : [createEmptyTroubleSolution()],
+  }))
+
+const parseTroubleItems = (project) => {
+  const responseItems = normalizeTroubleItems(project?.troubleShootingItems)
+
+  if (responseItems.length > 0) {
+    return prepareTroubleItemsForForm(responseItems)
+  }
+
+  const rawTroubleShooting = project?.troubleShooting?.trim()
+
+  if (!rawTroubleShooting) {
+    return [createEmptyTroubleItem()]
+  }
+
+  if (rawTroubleShooting.startsWith('[')) {
+    try {
+      const parsedItems = normalizeTroubleItems(JSON.parse(rawTroubleShooting))
+
+      if (parsedItems.length > 0) {
+        return prepareTroubleItemsForForm(parsedItems)
+      }
+    } catch {
+      // Legacy plain text fallback below.
+    }
+  }
+
+  const legacyItems = rawTroubleShooting
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => ({
+      title: '',
+      problem: line,
+      solutions: [createEmptyTroubleSolution()],
+      selectedSolutionIndex: 0,
+      selectedReason: '',
+    }))
+
+  return legacyItems.length > 0 ? legacyItems : [createEmptyTroubleItem()]
+}
+
 const createInitialFormData = (project) => ({
   title: project?.title ?? '',
   summary: project?.summary ?? '',
@@ -21,7 +127,7 @@ const createInitialFormData = (project) => ({
   githubUrl: project?.githubUrl ?? '',
   deployUrl: project?.deployUrl ?? '',
   myRole: project?.myRole ?? '',
-  troubleShooting: project?.troubleShooting ?? '',
+  troubleShootingItems: parseTroubleItems(project),
   result: project?.result ?? '',
   startDate: getDateValue(project?.startDate),
   endDate: getDateValue(project?.endDate),
@@ -73,6 +179,104 @@ function ProjectFormModal({ project, onClose, onSubmit }) {
     setFormData((currentFormData) => ({
       ...currentFormData,
       [name]: value,
+    }))
+  }
+
+  const handleTroubleItemChange = (targetIndex, field, value) => {
+    setFormData((currentFormData) => ({
+      ...currentFormData,
+      troubleShootingItems: currentFormData.troubleShootingItems.map((item, index) =>
+        index === targetIndex
+          ? {
+              ...item,
+              [field]: value,
+            }
+          : item,
+      ),
+    }))
+  }
+
+  const handleAddTroubleItem = () => {
+    setFormData((currentFormData) => ({
+      ...currentFormData,
+      troubleShootingItems: [...currentFormData.troubleShootingItems, createEmptyTroubleItem()],
+    }))
+  }
+
+  const handleRemoveTroubleItem = (targetIndex) => {
+    setFormData((currentFormData) => {
+      if (currentFormData.troubleShootingItems.length <= 1) {
+        return currentFormData
+      }
+
+      return {
+        ...currentFormData,
+        troubleShootingItems: currentFormData.troubleShootingItems.filter(
+          (_, index) => index !== targetIndex,
+        ),
+      }
+    })
+  }
+
+  const handleTroubleSolutionChange = (troubleIndex, solutionIndex, field, value) => {
+    setFormData((currentFormData) => ({
+      ...currentFormData,
+      troubleShootingItems: currentFormData.troubleShootingItems.map((item, index) =>
+        index === troubleIndex
+          ? {
+              ...item,
+              solutions: item.solutions.map((solution, currentSolutionIndex) =>
+                currentSolutionIndex === solutionIndex
+                  ? {
+                      ...solution,
+                      [field]: value,
+                    }
+                  : solution,
+              ),
+            }
+          : item,
+      ),
+    }))
+  }
+
+  const handleAddTroubleSolution = (troubleIndex) => {
+    setFormData((currentFormData) => ({
+      ...currentFormData,
+      troubleShootingItems: currentFormData.troubleShootingItems.map((item, index) =>
+        index === troubleIndex
+          ? {
+              ...item,
+              solutions: [...item.solutions, createEmptyTroubleSolution()],
+            }
+          : item,
+      ),
+    }))
+  }
+
+  const handleRemoveTroubleSolution = (troubleIndex, solutionIndex) => {
+    setFormData((currentFormData) => ({
+      ...currentFormData,
+      troubleShootingItems: currentFormData.troubleShootingItems.map((item, index) => {
+        if (index !== troubleIndex || item.solutions.length <= 1) {
+          return item
+        }
+
+        const nextSolutions = item.solutions.filter(
+          (_, currentSolutionIndex) => currentSolutionIndex !== solutionIndex,
+        )
+        const nextSelectedSolutionIndex =
+          item.selectedSolutionIndex >= nextSolutions.length
+            ? Math.max(nextSolutions.length - 1, 0)
+            : item.selectedSolutionIndex > solutionIndex
+              ? item.selectedSolutionIndex - 1
+              : item.selectedSolutionIndex
+
+        return {
+          ...item,
+          solutions: nextSolutions,
+          selectedSolutionIndex: nextSelectedSolutionIndex,
+        }
+      }),
     }))
   }
 
@@ -298,6 +502,7 @@ function ProjectFormModal({ project, onClose, onSubmit }) {
       return
     }
 
+    const troubleShootingItems = normalizeTroubleItems(formData.troubleShootingItems)
     const submitData = {
       title: formData.title.trim(),
       summary: formData.summary,
@@ -313,7 +518,8 @@ function ProjectFormModal({ project, onClose, onSubmit }) {
       projectUrl: formData.projectUrl,
       techStack: toNullableText(formData.techStack),
       myRole: toNullableText(formData.myRole),
-      troubleShooting: toNullableText(formData.troubleShooting),
+      troubleShooting: troubleShootingItems.length > 0 ? JSON.stringify(troubleShootingItems) : null,
+      troubleShootingItems,
       githubUrl: toNullableText(formData.githubUrl),
       deployUrl: toNullableText(formData.deployUrl),
       result: toNullableText(formData.result),
@@ -546,16 +752,171 @@ function ProjectFormModal({ project, onClose, onSubmit }) {
             />
           </label>
 
-          <label>
-            <span>트러블슈팅</span>
-            <textarea
-              name="troubleShooting"
-              rows="4"
-              value={formData.troubleShooting}
-              onChange={handleChange}
-              placeholder="겪었던 문제와 해결 과정을 입력"
-            />
-          </label>
+          <div className="form-field trouble-shooting-manager">
+            <div className="trouble-shooting-manager-header">
+              <div>
+                <span>트러블슈팅</span>
+                <small>문제, 검토한 방안, 최종 선택 이유를 함께 기록합니다.</small>
+              </div>
+              <button
+                className="trouble-item-button trouble-item-button--add"
+                type="button"
+                onClick={handleAddTroubleItem}
+                aria-label="트러블슈팅 항목 추가"
+                title="항목 추가"
+              >
+                +
+              </button>
+            </div>
+
+            <div className="trouble-item-list">
+              {formData.troubleShootingItems.map((item, index) => (
+                <div className="trouble-item-editor" key={index}>
+                  <div className="trouble-item-editor-fields">
+                    <div className="trouble-item-editor-header">
+                      <span>Issue {index + 1}</span>
+                      <input
+                        name="troubleTitle"
+                        type="text"
+                        value={item.title}
+                        onChange={(event) =>
+                          handleTroubleItemChange(index, 'title', event.target.value)
+                        }
+                        placeholder="제목 예: 이미지 업로드 실패"
+                      />
+                    </div>
+
+                    <label className="trouble-note-field">
+                      <span>문제 상황</span>
+                      <textarea
+                        name="troubleProblem"
+                        rows="4"
+                        value={item.problem}
+                        onChange={(event) =>
+                          handleTroubleItemChange(index, 'problem', event.target.value)
+                        }
+                        placeholder="현상, 원인, 영향 범위를 정리하세요."
+                      />
+                    </label>
+
+                    <div className="trouble-solution-block">
+                      <div className="trouble-solution-header">
+                        <div>
+                          <span>해결 방안 검토</span>
+                          <small>라디오 버튼으로 최종 채택 방안을 표시하세요.</small>
+                        </div>
+                        <button
+                          className="trouble-inline-button"
+                          type="button"
+                          onClick={() => handleAddTroubleSolution(index)}
+                          aria-label="해결 방안 추가"
+                          title="해결 방안 추가"
+                        >
+                          +
+                        </button>
+                      </div>
+
+                      <div className="trouble-solution-list">
+                        {item.solutions.map((solution, solutionIndex) => (
+                          <div
+                            className={`trouble-solution-editor ${
+                              item.selectedSolutionIndex === solutionIndex
+                                ? 'is-selected'
+                                : ''
+                            }`}
+                            key={solutionIndex}
+                          >
+                            <label className="trouble-solution-choice">
+                              <input
+                                type="radio"
+                                name={`selectedTroubleSolution-${index}`}
+                                checked={item.selectedSolutionIndex === solutionIndex}
+                                onChange={() =>
+                                  handleTroubleItemChange(
+                                    index,
+                                    'selectedSolutionIndex',
+                                    solutionIndex,
+                                  )
+                                }
+                              />
+                              <span className="trouble-solution-radio" aria-hidden="true" />
+                              <span className="trouble-solution-choice-text">최종 선택</span>
+                            </label>
+                            <div className="trouble-solution-fields">
+                              {item.selectedSolutionIndex === solutionIndex && (
+                                <span className="trouble-selected-badge">Selected</span>
+                              )}
+                              <input
+                                name="troubleSolutionTitle"
+                                type="text"
+                                value={solution.title}
+                                onChange={(event) =>
+                                  handleTroubleSolutionChange(
+                                    index,
+                                    solutionIndex,
+                                    'title',
+                                    event.target.value,
+                                  )
+                                }
+                                placeholder={`방안 ${solutionIndex + 1} 예: 서버 측 검증 로직 추가`}
+                              />
+                              <textarea
+                                name="troubleSolutionContent"
+                                rows="3"
+                                value={solution.content}
+                                onChange={(event) =>
+                                  handleTroubleSolutionChange(
+                                    index,
+                                    solutionIndex,
+                                    'content',
+                                    event.target.value,
+                                  )
+                                }
+                                placeholder="장점, 단점, 비용, 적용 범위를 함께 적어두세요."
+                              />
+                            </div>
+                            <button
+                              className="trouble-inline-button trouble-inline-button--remove"
+                              type="button"
+                              onClick={() => handleRemoveTroubleSolution(index, solutionIndex)}
+                              disabled={item.solutions.length <= 1}
+                              aria-label="해결 방안 삭제"
+                              title="해결 방안 삭제"
+                            >
+                              -
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <label className="trouble-note-field trouble-note-field--decision">
+                      <span>채택 이유 및 결과</span>
+                      <textarea
+                        name="troubleSelectedReason"
+                        rows="3"
+                        value={item.selectedReason}
+                        onChange={(event) =>
+                          handleTroubleItemChange(index, 'selectedReason', event.target.value)
+                        }
+                        placeholder="왜 이 방안을 선택했는지, 적용 후 어떤 결과가 있었는지 적으세요."
+                      />
+                    </label>
+                  </div>
+                  <button
+                    className="trouble-item-button trouble-item-button--remove"
+                    type="button"
+                    onClick={() => handleRemoveTroubleItem(index)}
+                    disabled={formData.troubleShootingItems.length <= 1}
+                    aria-label="트러블슈팅 항목 삭제"
+                    title="항목 삭제"
+                  >
+                    -
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
 
           <label>
             <span>성과 및 결과</span>

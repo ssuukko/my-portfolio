@@ -4,6 +4,7 @@ import com.portfolio.project.domain.Project;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record ProjectResponse(
         Long id,
@@ -20,6 +21,7 @@ public record ProjectResponse(
         String techStack,
         String myRole,
         String troubleShooting,
+        List<TroubleShootingItem> troubleShootingItems,
         String githubUrl,
         String deployUrl,
         String result,
@@ -49,6 +51,7 @@ public record ProjectResponse(
                 project.getTechStack(),
                 project.getMyRole(),
                 project.getTroubleShooting(),
+                TroubleShootingItems.parse(project.getTroubleShooting()),
                 project.getGithubUrl(),
                 project.getDeployUrl(),
                 project.getResult(),
@@ -79,6 +82,7 @@ public record ProjectResponse(
                 null,
                 null,
                 null,
+                List.of(),
                 project.getGithubUrl(),
                 project.getDeployUrl(),
                 null,

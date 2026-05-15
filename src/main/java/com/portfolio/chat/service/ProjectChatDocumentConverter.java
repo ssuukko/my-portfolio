@@ -1,6 +1,7 @@
 package com.portfolio.chat.service;
 
 import com.portfolio.project.domain.Project;
+import com.portfolio.project.dto.TroubleShootingItems;
 import dev.langchain4j.data.segment.TextSegment;
 import org.springframework.stereotype.Component;
 
@@ -27,7 +28,7 @@ public class ProjectChatDocumentConverter {
                 line("프로젝트 설명", project.getDescription()),
                 line("사용 기술 스택", project.getTechStack()),
                 line("본인 담당 역할", project.getMyRole()),
-                line("문제 해결 및 트러블슈팅 경험", project.getTroubleShooting()),
+                line("문제 해결 및 트러블슈팅 경험", TroubleShootingItems.toDisplayText(project.getTroubleShooting())),
                 line("결과 및 성과", project.getResult()),
                 line("진행 기간", formatPeriod(project.getStartDate(), project.getEndDate())),
                 "답변 가이드: 채용 담당자에게는 프로젝트명, 사용 기술, 본인 역할, 문제 해결 경험, 결과를 중심으로 설명한다."

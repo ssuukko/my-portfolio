@@ -4,6 +4,7 @@ import com.portfolio.project.domain.Project;
 import jakarta.validation.constraints.NotBlank;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public record ProjectCreateRequest(
         @NotBlank(message = "프로젝트 제목은 필수입니다.")
@@ -20,6 +21,7 @@ public record ProjectCreateRequest(
         String techStack,
         String myRole,
         String troubleShooting,
+        List<TroubleShootingItem> troubleShootingItems,
         String githubUrl,
         String deployUrl,
         String result,
@@ -40,7 +42,7 @@ public record ProjectCreateRequest(
                 useYn,
                 techStack,
                 myRole,
-                troubleShooting,
+                TroubleShootingItems.serialize(troubleShootingItems, troubleShooting),
                 githubUrl,
                 deployUrl,
                 result,

@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { fetchProject, logVisit } from '../api/projectApi'
+import {
+  fetchProject,
+  getProjectAttachmentDownloadUrl,
+  logVisit,
+} from '../api/projectApi'
 
 const formatDate = (date) => {
   if (!date) {
@@ -10,6 +14,15 @@ const formatDate = (date) => {
   return String(date).split('T')[0]
 }
 
+const formatFileSize = (bytes) => {
+  if (!bytes) {
+    return ''
+  }
+
+  const megabytes = bytes / 1024 / 1024
+  return `${megabytes.toFixed(megabytes >= 10 ? 0 : 1)}MB`
+}
+
 const hasText = (value) => Boolean(value?.trim())
 
 const splitLines = (value) =>
@@ -17,6 +30,81 @@ const splitLines = (value) =>
     .split('\n')
     .map((line) => line.trim())
     .filter(Boolean)
+
+const normalizeTroubleItems = (items) => {
+  if (!Array.isArray(items)) {
+    return []
+  }
+
+  return items
+    .map((item) => {
+      const solutions = Array.isArray(item?.solutions)
+        ? item.solutions
+            .map((solution) => ({
+              title: solution?.title?.trim() ?? '',
+              content: solution?.content?.trim() ?? '',
+            }))
+            .filter((solution) => solution.title || solution.content)
+        : []
+      const rawSelectedSolutionIndex = Number(item?.selectedSolutionIndex ?? 0)
+      const selectedSolutionIndex =
+        solutions.length > 0 &&
+        Number.isInteger(rawSelectedSolutionIndex) &&
+        rawSelectedSolutionIndex >= 0 &&
+        rawSelectedSolutionIndex < solutions.length
+          ? rawSelectedSolutionIndex
+          : null
+
+      return {
+        title: item?.title?.trim() ?? '',
+        problem: item?.problem?.trim() || item?.content?.trim() || '',
+        solutions,
+        selectedSolutionIndex,
+        selectedReason: item?.selectedReason?.trim() ?? '',
+      }
+    })
+    .filter(
+      (item) =>
+        item.title ||
+        item.problem ||
+        item.solutions.length > 0 ||
+        item.selectedReason,
+    )
+}
+
+const parseTroubleItems = (project) => {
+  const responseItems = normalizeTroubleItems(project.troubleShootingItems)
+
+  if (responseItems.length > 0) {
+    return responseItems
+  }
+
+  if (!hasText(project.troubleShooting)) {
+    return []
+  }
+
+  const rawTroubleShooting = project.troubleShooting.trim()
+
+  if (rawTroubleShooting.startsWith('[')) {
+    try {
+      const parsedItems = normalizeTroubleItems(JSON.parse(rawTroubleShooting))
+
+      if (parsedItems.length > 0) {
+        return parsedItems
+      }
+    } catch {
+      // Render legacy plain text below.
+    }
+  }
+
+  return splitLines(rawTroubleShooting).map((line) => ({
+    title: '',
+    problem: line,
+    solutions: [],
+    selectedSolutionIndex: null,
+    selectedReason: '',
+  }))
+}
 
 const splitTechStack = (value) =>
   value
@@ -231,11 +319,12 @@ function ProjectDetailPage() {
   const featureImageCaptions = hasText(project.featureImageCaptions)
     ? splitCaptions(project.featureImageCaptions)
     : []
+  const troubleShootingItems = parseTroubleItems(project)
   const hasTextDetailContent =
     hasText(project.description) ||
     hasText(project.techStack) ||
     hasText(project.myRole) ||
-    hasText(project.troubleShooting) ||
+    troubleShootingItems.length > 0 ||
     hasText(project.result)
   const hasDetailContent = hasTextDetailContent || featureImageUrls.length > 0
 
@@ -243,7 +332,7 @@ function ProjectDetailPage() {
     hasText(project.techStack) && 'techStack',
     hasText(project.description) && 'description',
     hasText(project.myRole) && 'myRole',
-    hasText(project.troubleShooting) && 'troubleShooting',
+    troubleShootingItems.length > 0 && 'troubleShooting',
     hasText(project.result) && 'result',
   ].filter(Boolean)
 
@@ -339,6 +428,15 @@ function ProjectDetailPage() {
                 rel="noopener noreferrer"
               >
                 <ExternalLinkIcon /> 배포 링크
+              </a>
+            )}
+            {hasText(project.attachmentFilename) && (
+              <a
+                className="pd-btn pd-btn--secondary"
+                href={getProjectAttachmentDownloadUrl(project.id)}
+              >
+                포트폴리오 다운로드
+                {project.attachmentFileSize ? ` (${formatFileSize(project.attachmentFileSize)})` : ''}
               </a>
             )}
           </div>
@@ -453,16 +551,66 @@ function ProjectDetailPage() {
               </DetailSection>
             )}
 
-            {hasText(project.troubleShooting) && (
+            {troubleShootingItems.length > 0 && (
               <DetailSection
                 number={getSectionNumber('troubleShooting')}
                 label="문제 해결"
                 title="트러블슈팅"
                 wide
               >
-                <div className="pd-prose">
-                  {splitLines(project.troubleShooting).map((line) => (
-                    <p key={line}>{line}</p>
+                <div className="pd-trouble-list">
+                  {troubleShootingItems.map((item, index) => (
+                    <article className="pd-trouble-card" key={`${item.title}-${index}`}>
+                      {item.title && <h3>{item.title}</h3>}
+                      {item.problem && (
+                        <div className="pd-trouble-card__content">
+                          <strong>문제</strong>
+                          {splitLines(item.problem).map((line) => (
+                            <p key={line}>{line}</p>
+                          ))}
+                        </div>
+                      )}
+                      {item.solutions.length > 0 && (
+                        <div className="pd-trouble-solutions">
+                          <strong>검토한 방안</strong>
+                          <ul>
+                            {item.solutions.map((solution, solutionIndex) => (
+                              <li
+                                className={
+                                  item.selectedSolutionIndex === solutionIndex
+                                    ? 'selected'
+                                    : undefined
+                                }
+                                key={`${solution.title}-${solutionIndex}`}
+                              >
+                                <span>{solution.title || `방안 ${solutionIndex + 1}`}</span>
+                                {solution.content && <p>{solution.content}</p>}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {(item.selectedSolutionIndex !== null || item.selectedReason) && (
+                        <div className="pd-trouble-choice">
+                          {item.selectedSolutionIndex !== null &&
+                            item.solutions[item.selectedSolutionIndex] && (
+                              <p>
+                                <strong>선택한 방안</strong>
+                                <span>
+                                  {item.solutions[item.selectedSolutionIndex].title ||
+                                    `방안 ${item.selectedSolutionIndex + 1}`}
+                                </span>
+                              </p>
+                            )}
+                          {item.selectedReason && (
+                            <p>
+                              <strong>선택 이유</strong>
+                              <span>{item.selectedReason}</span>
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </article>
                   ))}
                 </div>
               </DetailSection>
